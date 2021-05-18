@@ -7,18 +7,16 @@ This wiki is the introduction about how to use Cloud Pak for Data Installation A
 
 # Scenarios
 * Scenarios supported
-Install CPD 3.0.1 with the NFS or EFS.
-Install CPD 3.5 with the Portworx, NFS or EFS.
+Install CPD 3.5 with the Portworx or NFS.
 **Note**
-Please use **cpd35** branch for CPD 3.5 installation scenarios.
 * Scenarios to be supported
 Install CPD 3.5 with the OCS.
 # Prequisites
 The following prequisites have been met.
 * OpenShift 4.5 cluster with a cluster admin user is available
-* The Portworx, NFS or EFS storage class is ready
+* The Portworx or NFS storage class is ready
 * CPD installer and installation files downloaded
-https://github.ibm.com/LuBan/cpdauto/wiki/Download-CPD-installer-and-installation-files
+https://www.ibm.com/docs/en/cloud-paks/cp-data/3.5.0?topic=tasks-obtaining-installation-files
 * Precheck has been done and passed successfully
 
 # Key artifacts
@@ -29,7 +27,7 @@ https://github.ibm.com/LuBan/cpdauto/wiki/Download-CPD-installer-and-installatio
 # Step by step guide
 The following procedures are supposed to run in the Bastion node.
 
-## 1.Precheck (Optional)
+## 1.Precheck
 https://github.com/IBM-ICP4D/Install_Precheck_CPD_v3
 
 ## 2.Install tools and libs
@@ -51,12 +49,12 @@ As the load balancer have several options and sometimes it's not available to op
 
 ### Prepare the Node setting templates
 **CRI-O container settings**<br/>
-On Red Hat OpenShift version 4.5, Machine Config Pools manage your cluster of nodes and their corresponding Machine Configs (machineconfig). To change a setting in the crio.conf file, you can create a new machineconfig containing only the crio.conf file.
+On Red Hat OpenShift version 4.5/4.6, Machine Config Pools manage your cluster of nodes and their corresponding Machine Configs (machineconfig). To change a setting in the crio.conf file, you can create a new machineconfig containing only the crio.conf file.
 
 copy the crio.conf settings from a worker node by running the scp command from the worker node. Run this command from a terminal within the cluster network to make sure that you do not override an existing manual configuration. <br/>
 `scp core@$(oc get nodes | grep worker | head -1 | awk '{print $1}'):/etc/crio/crio.conf /tmp/crio.conf`
 
-Verify that /tmp/crio.conf looks like the template https://github.ibm.com/LuBan/cpdauto/blob/master/scripts/templates/cpd/crio.conf. If not, edit or add the following entries about **default_ulimits** and **pids_limit** in the **[crio.runtime]** section of the /tmp/crio.conf file.
+Verify that /tmp/crio.conf looks like the template https://github.com/IBM/luban/blob/main/cpdauto/scripts/templates/cpd/crio.conf. If not, edit or add the following entries about **default_ulimits** and **pids_limit** in the **[crio.runtime]** section of the /tmp/crio.conf file.
 
 `sed -i 's/pids_limit.*/pids_limit = 12290\ndefault_ulimits = [\n\ \ \ \ "nofile=66560:66560"\n]/g' /tmp/crio.conf`
 
@@ -64,7 +62,7 @@ After the verification passed, move the `/tmp/crio.conf` file to the folder `**c
 
 ## 5.Configure your installation
 Please refer to the template cpd_install.conf and update accordingly.
-https://github.ibm.com/LuBan/cpdauto/blob/master/cpd_install.conf
+https://github.com/IBM/luban/blob/main/cpdauto/cpd_install.conf
 
 ## 6.Launch the installation
 `cd ./cpdauto/scripts`<br/>
