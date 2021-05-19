@@ -1,4 +1,4 @@
-This wiki is the introduction about how to use Cloud Pak for Data Installation Accelerator to accelerate the deployment of Cloud Pak for Data in real-world scenarios.
+This is the introduction about how to use Cloud Pak for Data Installation Accelerator to accelerate the deployment of Cloud Pak for Data in real-world scenarios.
 
 # Values
 * Avoid human errors
