@@ -235,10 +235,10 @@ class CPDInstall(object):
             TR.info(methodName,"Streams package installation completed")
             self.printTime(streamsstart, streamsend, "Installing Streams")
 
-        if(self.installRuntimeGPUPy36 == "True"):
-            TR.info(methodName,"Start installing GPUPy36 package")
+        if(self.installRuntimeGPUPy37 == "True"):
+            TR.info(methodName,"Start installing GPUPy37 package")
             gpupy36start = Utilities.currentTimeMillis()
-            self.installAssembliesAirgap("runtime-addon-gpupy36",icpdInstallLogFile)
+            self.installAssembliesAirgap("runtime-addon-py37gpu",icpdInstallLogFile)
             gpupy36end = Utilities.currentTimeMillis()
             TR.info(methodName,"GPUPy36 package installation completed")
             self.printTime(gpupy36start, gpupy36end, "Installing GPUPy36")
@@ -422,7 +422,7 @@ class CPDInstall(object):
 
         registry = self.regsitry+"/"+self.namespace
   
-        
+        #push
         push_cmd = self.installer_path + " preload-images --assembly " + assembly + " --action push --load-from " + self.load_from + " --transfer-image-to " + registry + " --target-registry-username "+ self.ocp_admin_user + " --target-registry-password "+ self.ocToken + " --insecure-skip-tls-verify --accept-all-licenses | tee "+self.log_dir +"/"+assembly+"_push.log"
         TR.info(methodName,"Execute push command for assembly %s"%push_cmd)
         try:
@@ -430,7 +430,8 @@ class CPDInstall(object):
             TR.info(methodName,"Executed push command for assembly %s returned %s"%(assembly,retcode))
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
+        
+        #apply
         apply_cmd = self.installer_path +" adm --assembly " + assembly + " --latest-dependency -n "+self.namespace+ " --load-from " + self.load_from + " --accept-all-licenses --apply | tee "+self.log_dir +"/"+assembly+"_apply.log"
         TR.info(methodName,"Execute apply command for assembly %s"%apply_cmd)
         try:
@@ -438,9 +439,22 @@ class CPDInstall(object):
             TR.info(methodName,"Executed apply command for assembly %s returned %s"%(assembly,retcode))
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-        install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
-        TR.info(methodName,"Execute install command for assembly %s"%install_cmd)
+        
+        #install
+        TR.info("debug","self.storage_type= %s" %self.storage_type)
+        TR.info("debug","self.storage_class= %s" %self.storage_class)
+        
+        if(self.storage_type == "portworx"):
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd)    
+        elif(self.storage_type == "ocs"):
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config ocs --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd)
+        elif(self.storage_type == "nfs"):
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd)
+        else:
+            TR.error(methodName,"Invalid storage type : %s"%self.storage_type)
         try:
             retcode = call(install_cmd,shell=True, stdout=icpdInstallLogFile)
             TR.info(methodName,"Executed install command for assembly %s returned %s"%(assembly,retcode))
@@ -510,30 +524,32 @@ class CPDInstall(object):
         config = configparser.ConfigParser()
         config.read('../cpd_install.conf')
 
-        self.ocp_admin_user = config['install']['ocp_admin_user']
-        self.ocp_admin_password = config['install']['ocp_admin_password']
-        self.load_from = config['install']['load_from']
-        self.log_dir = config['install']['log_dir']
-        self.overall_log_file = config['install']['overall_log_file']
-        self.installer_path = config['install']['installer_path']
-        self.repo_path = config['install']['repo_path']
-        self.installWSL = config['install']['installWSL']
-        self.installWML = config['install']['installWML']
-        self.installWKC = config['install']['installWKC']
-        self.installSpark = config['install']['installSpark']
-        self.installCDE = config['install']['installCDE']
-        self.installDV = config['install']['installDV']
-        self.installOSWML = config['install']['installOSWML']
-        self.installRStudio = config['install']['installRStudio']
-        self.installSPSS = config['install']['installSPSS']
-        self.installStreams = config['install']['installStreams']
-        self.installRuntimeGPUPy36 = config['install']['installRuntimeGPUPy36']
-        self.installRuntimeR36 = config['install']['installRuntimeR36']
-        self.installHEE = config['install']['installHEE']
-        self.installDODS = config['install']['installDODS']
-        self.installOSG = config['install']['installOSG']
-        self.storage_class = config['install']['storage_class']        
-        self.namespace = config['install']['namespace']
+        self.ocp_admin_user = config['ocp_cred']['ocp_admin_user'].strip()
+        self.ocp_admin_password = config['ocp_cred']['ocp_admin_password'].strip()
+        self.change_node_settings = config['settings']['change_node_settings'].strip()
+        self.load_from = config['cpd_assembly']['load_from'].strip()
+        self.log_dir = config['cpd_assembly']['log_dir'].strip()
+        self.overall_log_file = config['cpd_assembly']['overall_log_file'].strip()
+        self.cpd_assemblyer_path = config['cpd_assembly']['installer_path'].strip()
+        self.repo_path = config['cpd_assembly']['repo_path'].strip()
+        self.installWSL = config['cpd_assembly']['installWSL'].strip()
+        self.installWML = config['cpd_assembly']['installWML'].strip()
+        self.installWKC = config['cpd_assembly']['installWKC'].strip()
+        self.installSpark = config['cpd_assembly']['installSpark'].strip()
+        self.installCDE = config['cpd_assembly']['installCDE'].strip()
+        self.installDV = config['cpd_assembly']['installDV'].strip()
+        self.installOSWML = config['cpd_assembly']['installOSWML'].strip()
+        self.installRStudio = config['cpd_assembly']['installRStudio'].strip()
+        self.installSPSS = config['cpd_assembly']['installSPSS'].strip()
+        self.installStreams = config['cpd_assembly']['installStreams'].strip()
+        self.installRuntimeGPUPy37 = config['cpd_assembly']['installRuntimeGPUPy37'].strip()
+        self.installRuntimeR36 = config['cpd_assembly']['installRuntimeR36'].strip()
+        self.installHEE = config['cpd_assembly']['installHEE'].strip()
+        self.installDODS = config['cpd_assembly']['installDODS'].strip()
+        self.installOSG = config['cpd_assembly']['installOSG'].strip()
+        self.storage_type = config['cpd_assembly']['storage_type'].strip()    
+        self.storage_class = config['cpd_assembly']['storage_class'].strip()        
+        self.namespace = config['cpd_assembly']['namespace'].strip()
         TR.info(methodName,"Load installation configuration completed")
         TR.info(methodName,"Installation configuration:" + self.ocp_admin_user + "-" + self.ocp_admin_password  + "-" + self.installer_path + "-" + self.installWSL)
     #endDef
@@ -553,10 +569,12 @@ class CPDInstall(object):
 
             with open(logFilePath,"a+") as icpdInstallLogFile:  
                 ocpstart = Utilities.currentTimeMillis()
-                self.changeNodeSettings(icpdInstallLogFile)
-                TR.info("debug","Finishd the node settings")
-                ocpend = Utilities.currentTimeMillis()
-                self.printTime(ocpstart, ocpend, "Chaning node settings")
+                TR.info("debug","change_node_settings= %s" %self.change_node_settings)
+                if(self.self.change_node_settings == "True"):
+                    self.changeNodeSettings(icpdInstallLogFile)
+                    TR.info("debug","Finishd the node settings")
+                    ocpend = Utilities.currentTimeMillis()
+                    self.printTime(ocpstart, ocpend, "Chaning node settings")
 
                 if(self.installOSWML == "True"):
                     self.installWML="True"
@@ -571,7 +589,7 @@ class CPDInstall(object):
                 TR.info("debug","installRStudio= %s" %self.installRStudio)
                 TR.info("debug","installSPSS= %s" %self.installSPSS)
                 TR.info("debug","installStreams= %s" %self.installStreams)
-                TR.info("debug","installRuntimeGPUPy36= %s" %self.installRuntimeGPUPy36)
+                TR.info("debug","installRuntimeGPUPy37= %s" %self.installRuntimeGPUPy37)
                 TR.info("debug","installRuntimeR36= %s" %self.installRuntimeR36)
                 TR.info("debug","installHEE= %s" %self.installHEE)
                 TR.info("debug","installDODS= %s" %self.installDODS)
