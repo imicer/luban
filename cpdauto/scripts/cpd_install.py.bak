@@ -327,13 +327,12 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
         
-        TR.info(methodName,"oc login successfully")
 
         crio_conf   = "./templates/cpd/crio.conf"
         crio_mc     = "./templates/cpd/crio-mc.yaml"
         
-        crio_config_data = base64.b64encode(self.readFileContent(crio_conf).encode('ascii')).decode("ascii")
-        TR.info(methodName,"encode crio.conf to be base64 string")
+        
+        crio_config_data = base64.b64encode(self.readFileContent(crio_conf))
         self.updateTemplateFile(crio_mc, '${crio-config-data}', crio_config_data)
 
         create_crio_mc  = "oc create -f "+crio_mc
@@ -531,7 +530,7 @@ class CPDInstall(object):
         self.load_from = config['cpd_assembly']['load_from'].strip()
         self.log_dir = config['cpd_assembly']['log_dir'].strip()
         self.overall_log_file = config['cpd_assembly']['overall_log_file'].strip()
-        self.installer_path = config['cpd_assembly']['installer_path'].strip()
+        self.cpd_assemblyer_path = config['cpd_assembly']['installer_path'].strip()
         self.repo_path = config['cpd_assembly']['repo_path'].strip()
         self.installWSL = config['cpd_assembly']['installWSL'].strip()
         self.installWML = config['cpd_assembly']['installWML'].strip()
@@ -552,7 +551,7 @@ class CPDInstall(object):
         self.storage_class = config['cpd_assembly']['storage_class'].strip()        
         self.namespace = config['cpd_assembly']['namespace'].strip()
         TR.info(methodName,"Load installation configuration completed")
-        TR.info(methodName,"Installation configuration:" + self.ocp_admin_user + "-" + self.ocp_admin_password  + "-" + self.installer_path)
+        TR.info(methodName,"Installation configuration:" + self.ocp_admin_user + "-" + self.ocp_admin_password  + "-" + self.installer_path + "-" + self.installWSL)
     #endDef
 
     def main(self,argv):
@@ -571,7 +570,7 @@ class CPDInstall(object):
             with open(logFilePath,"a+") as icpdInstallLogFile:  
                 ocpstart = Utilities.currentTimeMillis()
                 TR.info("debug","change_node_settings= %s" %self.change_node_settings)
-                if(self.change_node_settings == "True"):
+                if(self.self.change_node_settings == "True"):
                     self.changeNodeSettings(icpdInstallLogFile)
                     TR.info("debug","Finishd the node settings")
                     ocpend = Utilities.currentTimeMillis()
