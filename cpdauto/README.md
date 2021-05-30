@@ -1,4 +1,4 @@
-This is the introduction about how to use Cloud Pak for Data Installation Accelerator to accelerate the deployment of Cloud Pak for Data in real-world scenarios.
+This is the introduction about how to use Cloud Pak for Data Installation Accelerator to accelerate the deployment of Cloud Pak for Data in in various scenarios.
 
 # Values
 * Avoid human errors
@@ -6,15 +6,12 @@ This is the introduction about how to use Cloud Pak for Data Installation Accele
 * Improve the deployment experience 
 
 # Scenarios
-* Scenarios supported
-Install CPD 3.5 with the Portworx or NFS.
-**Note**
-* Scenarios to be supported
-Install CPD 3.5 with the OCS.
+* Scenarios supported </br>
+Install CPD 3.5 with the Portworx, OCS or NFS.
 # Prequisites
 The following prequisites have been met.
 * OpenShift 4.5 cluster with a cluster admin user is available
-* The Portworx or NFS storage class is ready
+* The Portworx, OCS or NFS storage class is ready
 * CPD installer and installation files downloaded
 https://www.ibm.com/docs/en/cloud-paks/cp-data/3.5.0?topic=tasks-obtaining-installation-files
 * Precheck has been done and passed successfully
