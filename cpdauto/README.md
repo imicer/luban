@@ -10,10 +10,12 @@ This is the introduction about how to use Cloud Pak for Data Installation Accele
 Install CPD 3.5 with the Portworx, OCS or NFS.
 # Prequisites
 The following prequisites have been met.
-* OpenShift 4.5 cluster with a cluster admin user is available
+* OpenShift 4.5/4.6 cluster with a cluster admin user is available
+* OpenShift image registry has been set up
 * The Portworx, OCS or NFS storage class is ready
 * CPD installer and installation files downloaded
 https://www.ibm.com/docs/en/cloud-paks/cp-data/3.5.0?topic=tasks-obtaining-installation-files
+* python3 and pip have been installed
 * Precheck has been done and passed successfully
 
 # Key artifacts
@@ -38,7 +40,9 @@ https://github.com/IBM-ICP4D/Install_Precheck_CPD_v3
 ## 3. Create the log directory
 mkdir -p /ibm/logs
 
-## 4.Prepare node settings
+## 4.Cluster settings
+### Timeout settings for OpenShift image registry
+`oc annotate route default-route default-route --overwrite haproxy.router.openshift.io/timeout=10m -n openshift-image-registry`
 
 ### Load balancer timeout settings
 As the load balancer have several options and sometimes it's not available to operate them directly, so the manual work is still needed.
