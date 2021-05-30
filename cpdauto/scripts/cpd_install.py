@@ -394,7 +394,7 @@ class CPDInstall(object):
         """
         methodName = "installAssemblies"
 
-        registry = self.regsitry+"/"+self.namespace
+        registry = self.regsitry.decode("ascii")+"/"+self.namespace
         apply_cmd = self.installer_path + " adm -r " + self.repo_path + " -a "+assembly+"  -n " + self.namespace+" --accept-all-licenses --apply | tee /ibm/logs/"+assembly+"_apply.log"
         TR.info(methodName,"Execute apply command for assembly %s"%apply_cmd)
         try:
@@ -403,7 +403,24 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-        install_cmd = self.installer_path + " install --storageclass " + self.storage_class + " --override-config portworx -r " + self.repo_path + " --assembly "+assembly+" --arch x86_64 -n "+self.namespace+" --transfer-image-to "+registry+" --cluster-pull-username="+ self.ocp_admin_user + " --cluster-pull-password="+self.ocToken+" --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/"+self.namespace+" --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/" +assembly+"_install.log"
+        #install
+        TR.info("debug","self.storage_type= %s" %self.storage_type)
+        TR.info("debug","self.storage_class= %s" %self.storage_class)
+        
+        if(self.storage_type == "portworx"):
+            install_cmd = self.installer_path + " install --storageclass " + self.storage_class + " --override-config portworx -r " + self.repo_path + " --assembly "+assembly+" --arch x86_64 -n "+self.namespace+" --transfer-image-to "+registry+" --cluster-pull-username="+ self.ocp_admin_user + " --cluster-pull-password="+self.ocToken.decode("ascii")+" --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/"+self.namespace+" --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/" +assembly+"_install.log"
+            install_cmd_for_print = install_cmd = self.installer_path + " install --storageclass " + self.storage_class + " --override-config portworx -r " + self.repo_path + " --assembly "+assembly+" --arch x86_64 -n "+self.namespace+" --transfer-image-to "+registry+" --cluster-pull-username="+ self.ocp_admin_user + " --cluster-pull-password="+base64.b64encode(self.ocToken).decode("ascii")+" --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/"+self.namespace+" --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/" +assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)    
+        elif(self.storage_type == "ocs"):
+            install_cmd = self.installer_path + " install --storageclass " + self.storage_class + " --override-config ocs -r " + self.repo_path + " --assembly "+assembly+" --arch x86_64 -n "+self.namespace+" --transfer-image-to "+registry+" --cluster-pull-username="+ self.ocp_admin_user + " --cluster-pull-password="+self.ocToken.decode("ascii")+" --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/"+self.namespace+" --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/" +assembly+"_install.log"
+            install_cmd_for_print = self.installer_path + " install --storageclass " + self.storage_class + " --override-config ocs -r " + self.repo_path + " --assembly "+assembly+" --arch x86_64 -n "+self.namespace+" --transfer-image-to "+registry+" --cluster-pull-username="+ self.ocp_admin_user + " --cluster-pull-password="+base64.b64encode(self.ocToken).decode("ascii")+" --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/"+self.namespace+" --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/" +assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)
+        elif(self.storage_type == "nfs"):
+            install_cmd = self.installer_path + " install --storageclass " + self.storage_class + " -r " + self.repo_path + " --assembly "+assembly+" --arch x86_64 -n "+self.namespace+" --transfer-image-to "+registry+" --cluster-pull-username="+ self.ocp_admin_user + " --cluster-pull-password="+self.ocToken.decode("ascii")+" --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/"+self.namespace+" --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/" +assembly+"_install.log"
+            install_cmd_for_print = self.installer_path + " install --storageclass " + self.storage_class + " -r " + self.repo_path + " --assembly "+assembly+" --arch x86_64 -n "+self.namespace+" --transfer-image-to "+registry+" --cluster-pull-username="+ self.ocp_admin_user + " --cluster-pull-password="+base64.b64encode(self.ocToken).decode("ascii")+" --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/"+self.namespace+" --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/" +assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)
+        else:
+            TR.error(methodName,"Invalid storage type : %s"%self.storage_type)
 
         try:     
             retcode = call(install_cmd,shell=True, stdout=icpdInstallLogFile)
@@ -421,11 +438,12 @@ class CPDInstall(object):
         """
         methodName = "installAssembliesAirgap"
 
-        registry = self.regsitry+"/"+self.namespace
+        registry = self.regsitry.decode("ascii")+"/"+self.namespace
   
         #push
-        push_cmd = self.installer_path + " preload-images --assembly " + assembly + " --action push --load-from " + self.load_from + " --transfer-image-to " + registry + " --target-registry-username "+ self.ocp_admin_user + " --target-registry-password "+ self.ocToken + " --insecure-skip-tls-verify --accept-all-licenses | tee "+self.log_dir +"/"+assembly+"_push.log"
-        TR.info(methodName,"Execute push command for assembly %s"%push_cmd)
+        push_cmd = self.installer_path + " preload-images --assembly " + assembly + " --action push --load-from " + self.load_from + " --transfer-image-to " + registry + " --target-registry-username "+ self.ocp_admin_user + " --target-registry-password "+ self.ocToken.decode("ascii") + " --insecure-skip-tls-verify --accept-all-licenses | tee "+self.log_dir +"/"+assembly+"_push.log"
+        push_cmd_for_print = self.installer_path + " preload-images --assembly " + assembly + " --action push --load-from " + self.load_from + " --transfer-image-to " + registry + " --target-registry-username "+ self.ocp_admin_user + " --target-registry-password " + base64.b64encode(self.ocToken).decode("ascii") + " --insecure-skip-tls-verify --accept-all-licenses | tee "+self.log_dir +"/"+assembly+"_push.log"
+        TR.info(methodName,"Execute push command for assembly %s"%push_cmd_for_print)
         try:
             retcode = call(push_cmd,shell=True, stdout=icpdInstallLogFile)
             TR.info(methodName,"Executed push command for assembly %s returned %s"%(assembly,retcode))
@@ -446,14 +464,17 @@ class CPDInstall(object):
         TR.info("debug","self.storage_class= %s" %self.storage_class)
         
         if(self.storage_type == "portworx"):
-            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
-            TR.info(methodName,"Execute install command for assembly %s"%install_cmd)    
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            install_cmd_for_print = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + base64.b64encode(self.ocToken).decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)    
         elif(self.storage_type == "ocs"):
-            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config ocs --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
-            TR.info(methodName,"Execute install command for assembly %s"%install_cmd)
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config ocs --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            install_cmd_for_print = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config ocs --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + base64.b64encode(self.ocToken).decode("ascii")+ " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)
         elif(self.storage_type == "nfs"):
-            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
-            TR.info(methodName,"Execute install command for assembly %s"%install_cmd)
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            install_cmd_for_print = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --load-from " + self.load_from +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + base64.b64encode(self.ocToken).decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)
         else:
             TR.error(methodName,"Invalid storage type : %s"%self.storage_type)
         try:
@@ -601,8 +622,8 @@ class CPDInstall(object):
 
                 try:
                     self.ocToken = check_output(['bash','-c', getTokenCmd])
-                    self.ocToken = self.ocToken.strip('\n')
-                    TR.info(methodName,"Completed %s command with return value %s" %(getTokenCmd,self.ocToken))
+                    self.ocToken = self.ocToken.strip('\n'.encode('ascii'))
+                    TR.info(methodName,"Completed %s command with return value (encoded) %s" %(getTokenCmd,base64.b64encode(self.ocToken.encode("ascii")).decode("ascii")))
                 except CalledProcessError as e:
                     TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
