@@ -30,10 +30,11 @@ The following procedures are supposed to run in the Bastion node.
 https://github.com/IBM-ICP4D/Install_Precheck_CPD_v3
 
 ## 2.Install tools and libs
-* yum install -y python27
-* ln -s /usr/bin/python2.7 /usr/bin/python
-* python -m pip install configparser
-* yum install jq
+* yum install -y python3
+* ln -s /usr/bin/python3 /usr/bin/python
+* ln -s /usr/bin/pip3 /usr/bin/pip
+* pip install ./cpdauto/packages/configparser-4.0.2-py2.py3-none-any.whl
+* cp ./cpdauto/packages/jq-linux64 /usr/bin/jq
 
 [Installing Python and packages on an Offline Machine: A Comprehensive Guide](https://stackoverflow.com/questions/56853876/installing-python-2-7-16-and-packages-offline-concerns-with-dependencies)
 
