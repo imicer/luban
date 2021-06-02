@@ -156,7 +156,7 @@ class CPDInstall(object):
         if(self.installWSL == "True"):
             TR.info(methodName,"Start installing WSL package")
             wslstart = Utilities.currentTimeMillis()
-            if(self.self.installWSL_load_from == "NA"):
+            if(self.installWSL_load_from == "NA"):
                 self.installAssembliesAirgap("wsl",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("wsl",self.installWSL_load_from,icpdInstallLogFile)
@@ -167,7 +167,7 @@ class CPDInstall(object):
         if(self.installWML == "True"):
             TR.info(methodName,"Start installing WML package")
             wmlstart = Utilities.currentTimeMillis()
-            if(self.self.installWML_load_from == "NA"):
+            if(self.installWML_load_from == "NA"):
                 self.installAssembliesAirgap("wml",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("wml",self.installWML_load_from,icpdInstallLogFile)
@@ -178,7 +178,7 @@ class CPDInstall(object):
         if(self.installOSWML == "True"):
             TR.info(methodName,"Start installing AI Openscale package")
             aiostart = Utilities.currentTimeMillis()
-            if(self.self.installOSWML_load_from == "NA"):
+            if(self.installOSWML_load_from == "NA"):
                 self.installAssembliesAirgap("aiopenscale",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("aiopenscale",self.installOSWML_load_from,icpdInstallLogFile)
@@ -189,7 +189,7 @@ class CPDInstall(object):
         if(self.installCDE == "True"):
             TR.info(methodName,"Start installing Cognos Dashboard package")
             cdestart = Utilities.currentTimeMillis()
-            if(self.self.installCDE_load_from == "NA"):
+            if(self.installCDE_load_from == "NA"):
                 self.installAssembliesAirgap("cde",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("cde",self.installCDE_load_from,icpdInstallLogFile)
@@ -201,7 +201,7 @@ class CPDInstall(object):
         if(self.installRStudio == "True"):
             TR.info(methodName,"Start installing RStudio package")
             rstudiostart = Utilities.currentTimeMillis()
-            if(self.self.installRStudio_load_from == "NA"):
+            if(self.installRStudio_load_from == "NA"):
                 self.installAssembliesAirgap("rstudio",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("rstudio",self.installRStudio_load_from,icpdInstallLogFile)
@@ -212,7 +212,7 @@ class CPDInstall(object):
         if(self.installSPSS == "True"):
             TR.info(methodName,"Start installing SPSS package")
             spssstart = Utilities.currentTimeMillis()
-            if(self.self.installSPSS_load_from == "NA"):
+            if(self.installSPSS_load_from == "NA"):
                 self.installAssembliesAirgap("spss-modeler",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("spss-modeler",self.installSPSS_load_from,icpdInstallLogFile)
@@ -223,7 +223,7 @@ class CPDInstall(object):
         if(self.installSpark == "True"):
             TR.info(methodName,"Start installing Spark AE package")
             sparkstart = Utilities.currentTimeMillis()
-            if(self.self.installSpark_load_from == "NA"):
+            if(self.installSpark_load_from == "NA"):
                 self.installAssembliesAirgap("spark",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("spark",self.installSpark_load_from,icpdInstallLogFile)
@@ -234,7 +234,7 @@ class CPDInstall(object):
         if(self.installRuntimeGPUPy37 == "True"):
             TR.info(methodName,"Start installing GPUPy37 package")
             gpupy36start = Utilities.currentTimeMillis()
-            if(self.self.installRuntimeGPUPy37_load_from == "NA"):
+            if(self.installRuntimeGPUPy37_load_from == "NA"):
                 self.installAssembliesAirgap("runtime-addon-py37gpu",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("runtime-addon-py37gpu",self.installRuntimeGPUPy37_load_from,icpdInstallLogFile)
@@ -245,7 +245,7 @@ class CPDInstall(object):
         if(self.installRuntimeR36 == "True"):
             TR.info(methodName,"Start installing RuntimeR36 package")
             r36start = Utilities.currentTimeMillis()
-            if(self.self.installRuntimeR36_load_from == "NA"):
+            if(self.installRuntimeR36_load_from == "NA"):
                 self.installAssembliesAirgap("runtime-addon-py37gpu",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("runtime-addon-r36",self.installRuntimeR36_load_from,icpdInstallLogFile)
@@ -256,7 +256,7 @@ class CPDInstall(object):
         if(self.installHEE == "True"):
             TR.info(methodName,"Start installing HEE package")
             heestart = Utilities.currentTimeMillis()
-            if(self.self.installHEE_load_from == "NA"):
+            if(self.installHEE_load_from == "NA"):
                 self.installAssembliesAirgap("hadoop-addon",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("hadoop-addon",self.installHEE_load_from,icpdInstallLogFile)
@@ -267,7 +267,7 @@ class CPDInstall(object):
         if(self.installDODS == "True"):
             TR.info(methodName,"Start installing DODS package")
             dodsstart = Utilities.currentTimeMillis()
-            if(self.self.installDODS_load_from == "NA"):
+            if(self.installDODS_load_from == "NA"):
                 self.installAssembliesAirgap("dods",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("dods",self.installDODS_load_from,icpdInstallLogFile)
@@ -278,7 +278,7 @@ class CPDInstall(object):
         if(self.installWKC == "True"):
             TR.info(methodName,"Start installing WKC package")
             wkcstart = Utilities.currentTimeMillis()
-            if(self.self.installWKC_load_from == "NA"):
+            if(self.installWKC_load_from == "NA"):
                 self.installAssembliesAirgap("wkc",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("wkc",self.installWKC_load_from,icpdInstallLogFile)            
@@ -289,7 +289,7 @@ class CPDInstall(object):
         if(self.installStreams == "True"):
             TR.info(methodName,"Start installing Streams package")
             streamsstart = Utilities.currentTimeMillis()
-            if(self.self.installStreams_load_from == "NA"):
+            if(self.installStreams_load_from == "NA"):
                 self.installAssembliesAirgap("streams",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("streams",self.installStreams_load_from,icpdInstallLogFile)   
@@ -300,7 +300,7 @@ class CPDInstall(object):
         if(self.installDV == "True"):
             TR.info(methodName,"Start installing DV package")
             dvstart = Utilities.currentTimeMillis()
-            if(self.self.installDV_load_from == "NA"):
+            if(self.installDV_load_from == "NA"):
                 self.installAssembliesAirgap("dv",self.default_load_from,icpdInstallLogFile)
             else:
                 self.installAssembliesAirgap("dv",self.installDV_load_from,icpdInstallLogFile)   
