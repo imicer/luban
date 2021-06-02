@@ -615,8 +615,6 @@ class CPDInstall(object):
         self.installHEE_load_from = config['cpd_assembly']['installHEE_load_from'].strip() 
         self.installDODS = config['cpd_assembly']['installDODS'].strip()
         self.installDODS_load_from = config['cpd_assembly']['installDODS_load_from'].strip()
-        self.installOSG = config['cpd_assembly']['installOSG'].strip()
-        self.installOSG_load_from = config['cpd_assembly']['installOSG_load_from'].strip()
         self.storage_type = config['cpd_assembly']['storage_type'].strip()    
         self.storage_class = config['cpd_assembly']['storage_class'].strip()        
         self.namespace = config['cpd_assembly']['namespace'].strip()
@@ -678,8 +676,6 @@ class CPDInstall(object):
                 TR.info("debug","installHEE_load_from= %s" %self.installHEE_load_from)
                 TR.info("debug","installDODS= %s" %self.installDODS)
                 TR.info("debug","installDODS_load_from= %s" %self.installDODS_load_from)
-                TR.info("debug","installOSG= %s" %self.installOSG)
-                TR.info("debug","installOSG_load_from= %s" %self.installOSG_load_from)
 
                
                 getTokenCmd = "oc whoami -t"
