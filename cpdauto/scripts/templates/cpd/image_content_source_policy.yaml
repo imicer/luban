@@ -1,0 +1,18 @@
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: cloud-pak-for-data-mirror
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - REPLACE_REGISTRY/opencloudio
+    source: quay.io/opencloudio
+  - mirrors:
+    - REPLACE_REGISTRY/cp
+    source: cp.icr.io/cp
+  - mirrors:
+    - REPLACE_REGISTRY/cp/cpd
+    source: cp.icr.io/cp/cpd
+  - mirrors:
+    - REPLACE_REGISTRY/cpopen
+    source: icr.io/cpopen

@@ -640,9 +640,9 @@ class CPDInstall(object):
 
         self.ocp_admin_user = config['ocp_cred']['ocp_admin_user'].strip()
         self.ocp_admin_password = config['ocp_cred']['ocp_admin_password'].strip()
-        self.private_registry_url = config['private_registry']['private_registry_url'].strip()
-        self.private_registry_user = config['private_registry']['private_registry_user'].strip()
-        self.private_registry_password = config['private_registry']['private_registry_password'].strip()
+        self.image_registry_url = config['image_registry']['image_registry_url'].strip()
+        self.image_registry_user = config['image_registry']['image_registry_user'].strip()
+        self.image_registry_password = config['image_registry']['image_registry_password'].strip()
         self.change_node_settings = config['settings']['change_node_settings'].strip()
         self.config_image_pull = config['settings']['config_image_pull'].strip()
         self.log_dir = config['cpd_assembly']['log_dir'].strip()
@@ -705,9 +705,9 @@ class CPDInstall(object):
                 if(self.installOSWML == "True"):
                     self.installWML="True"
                 
-                TR.info("debug","private_registry_url= %s" %self.private_registry_url)
-                TR.info("debug","private_registry_user= %s" %self.private_registry_user)
-                TR.info("debug","private_registry_password= %s" %self.private_registry_password)
+                TR.info("debug","image_registry_url= %s" %self.image_registry_url)
+                TR.info("debug","image_registry_user= %s" %self.image_registry_user)
+                TR.info("debug","image_registry_password= %s" %self.image_registry_password)
                 TR.info("debug","foundation_service_namespace= %s" %self.foundation_service_namespace)
                 TR.info("debug","cpd_operator_namespace= %s" %self.cpd_operator_namespace)
                 TR.info("debug","cpd_instance_namespace= %s" %self.cpd_instance_namespace)
