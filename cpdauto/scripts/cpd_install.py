@@ -117,14 +117,6 @@ class CPDInstall(object):
         methodName = "installCPD"
         os.chmod(self.installer_path,stat.S_IEXEC)
       
-        default_route = "oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}'"
-        TR.info(methodName,"Get default route  %s"%default_route)
-        try:
-            self.regsitry = check_output(['bash','-c', default_route]) 
-            TR.info(methodName,"Completed %s command with return value %s" %(default_route,self.regsitry))
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-
         try:
             oc_login = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
             retcode = call(oc_login,shell=True, stdout=icpdInstallLogFile)
@@ -132,12 +124,26 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
-        oc_new_project ="oc new-project " + self.namespace
+        oc_new_project ="oc new-project " + self.foundation_service_namespace
         try:
             retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
-            TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.namespace,retcode))
+            TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.foundation_service_namespace,retcode))
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
+
+        oc_new_project ="oc new-project " + self.cpd_operator_namespace
+        try:
+            retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
+            TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.cpd_operator_namespace,retcode))
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+
+        oc_new_project ="oc new-project " + self.cpd_instance_namespace
+        try:
+            retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
+            TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.cpd_instance_namespace,retcode))
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))      
 
         litestart = Utilities.currentTimeMillis()
         TR.info(methodName,"Start installing Lite package")
@@ -353,6 +359,59 @@ class CPDInstall(object):
     def changeNodeSettings(self, icpdInstallLogFile):
         methodName = "changeNodeSettings"
         TR.info(methodName,"  Start changing node settings of Openshift Container Platform")  
+
+        self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
+        try:
+            call(self.logincmd, shell=True,stdout=icpdInstallLogFile)
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        
+        TR.info(methodName,"oc login successfully")
+
+        crio_conf   = "./templates/cpd/crio.conf"
+        crio_mc     = "./templates/cpd/crio-mc.yaml"
+        
+        crio_config_data = base64.b64encode(self.readFileContent(crio_conf).encode('ascii')).decode("ascii")
+        TR.info(methodName,"encode crio.conf to be base64 string")
+        self.updateTemplateFile(crio_mc, '${crio-config-data}', crio_config_data)
+
+        create_crio_mc  = "oc apply -f "+crio_mc
+
+        TR.info(methodName,"Creating crio mc with command %s"%create_crio_mc)
+        try:
+            crio_retcode = check_output(['bash','-c', create_crio_mc]) 
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        TR.info(methodName,"Created Crio mc with command %s returned %s"%(create_crio_mc,crio_retcode))
+        
+        """
+        "oc apply -f ${local.ocptemplates}/kernel-params_node-tuning-operator.yaml",
+        "oc apply -f ${local.ocptemplates}/security-limits-mc.yaml",
+        """
+        setting_kernel_param_cmd =  "oc apply -f ./templates/cpd/kernel-params_node-tuning-operator.yaml"
+        TR.info(methodName,"Create Node Tuning Operator for kernel parameter")
+        try:
+            retcode = check_output(['bash','-c', setting_kernel_param_cmd]) 
+            TR.info(methodName,"Created Node Tuning Operator for kernel parameter %s" %retcode) 
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+
+        db2-kubelet-config_cmd =  "oc apply -f ./templates/cpd/db2-kubelet-config-mc.yaml"
+        TR.info(methodName,"Configure kubelet to allow Db2U to make syscalls as needed.")
+        try:
+            retcode = check_output(['bash','-c', db2-kubelet-config_cmd]) 
+            TR.info(methodName,"Configured kubelet to allow Db2U to make syscalls %s" %retcode)  
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
+        time.sleep(600)
+
+        TR.info(methodName,"  Completed node settings of Openshift Container Platform")
+    #endDef
+
+    def configImagePull(self, icpdInstallLogFile):
+        ##setup-global-pull-secret-bedrock.sh, gen-config-json.sh, gen-registries-conf.sh
+        methodName = "configImagePull"
+        TR.info(methodName,"  Start configuring image pull of Openshift Container Platform")  
 
         self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
         try:
