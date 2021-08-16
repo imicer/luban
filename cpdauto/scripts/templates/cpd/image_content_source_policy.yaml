@@ -5,14 +5,14 @@ metadata:
 spec:
   repositoryDigestMirrors:
   - mirrors:
-    - REPLACE_REGISTRY/opencloudio
+    - ${REPLACE_REGISTRY}/opencloudio
     source: quay.io/opencloudio
   - mirrors:
-    - REPLACE_REGISTRY/cp
+    - ${REPLACE_REGISTRY}/cp
     source: cp.icr.io/cp
   - mirrors:
-    - REPLACE_REGISTRY/cp/cpd
+    - ${REPLACE_REGISTRY}/cp/cpd
     source: cp.icr.io/cp/cpd
   - mirrors:
-    - REPLACE_REGISTRY/cpopen
+    - ${REPLACE_REGISTRY}/cpopen
     source: icr.io/cpopen

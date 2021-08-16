@@ -421,44 +421,33 @@ class CPDInstall(object):
         
         TR.info(methodName,"oc login successfully")
 
-        crio_conf   = "./templates/cpd/crio.conf"
-        crio_mc     = "./templates/cpd/crio-mc.yaml"
-        
-        crio_config_data = base64.b64encode(self.readFileContent(crio_conf).encode('ascii')).decode("ascii")
-        TR.info(methodName,"encode crio.conf to be base64 string")
-        self.updateTemplateFile(crio_mc, '${crio-config-data}', crio_config_data)
+        set_global_pull_secret_command  = "./setup-global-pull-secret " + self.image_registry_url + " " + self.image_registry_user  + " " + self.image_registry_password
 
-        create_crio_mc  = "oc create -f "+crio_mc
-
-        TR.info(methodName,"Creating crio mc with command %s"%create_crio_mc)
+        TR.info(methodName,"Setting global pull secret with command %s"%set_global_pull_secret_command)
         try:
-            crio_retcode = check_output(['bash','-c', create_crio_mc]) 
+            crio_retcode = check_output(['bash','-c', set_global_pull_secret_command]) 
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-        TR.info(methodName,"Created Crio mc with command %s returned %s"%(create_crio_mc,crio_retcode))
+        TR.info(methodName,"Setting global pull secret with command %s returned %s"%(create_crio_mc,crio_retcode))
         
         """
-        "oc create -f ${local.ocptemplates}/wkc-sysctl-mc.yaml",
-        "oc create -f ${local.ocptemplates}/security-limits-mc.yaml",
+        "oc apply -f ${local.ocptemplates}/image_content_source_policy.yaml"
         """
-        sysctl_cmd =  "oc create -f ./templates/cpd/wkc-sysctl-mc.yaml"
-        TR.info(methodName,"Create SystemCtl Machine config")
+
+        image_content_source_policy_template = "./templates/cpd/image_content_source_policy.yaml"
+        TR.info(methodName,"Prepare for image content source policy")
+        self.updateTemplateFile(image_content_source_policy_template, '${REPLACE_REGISTRY}', self.image_registry_url)
+        
+
+        image_content_source_policy_cmd =  "oc apply -f " + image_content_source_policy_template
+        TR.info(methodName,"Create image content source policy")
         try:
-            retcode = check_output(['bash','-c', sysctl_cmd]) 
-            TR.info(methodName,"Created  SystemCtl Machine config %s" %retcode) 
+            retcode = check_output(['bash','-c', image_content_source_policy_cmd]) 
+            TR.info(methodName,"Create image content source policy %s" %retcode) 
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
-        secLimits_cmd =  "oc create -f ./templates/cpd/security-limits-mc.yaml"
-        TR.info(methodName,"Create Security Limits Machine config")
-        try:
-            retcode = check_output(['bash','-c', secLimits_cmd]) 
-            TR.info(methodName,"Created  Security Limits Machine config %s" %retcode)  
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
-        time.sleep(600)
-
-        TR.info(methodName,"  Completed node settings of Openshift Container Platform")
+        TR.info(methodName,"  Completed image pull related setting")
     #endDef
 
     def updateTemplateFile(self, source, placeHolder, value):
@@ -657,7 +646,6 @@ class CPDInstall(object):
         self.installOSWML = config['cpd_assembly']['installOSWML'].strip()
         self.installRStudio = config['cpd_assembly']['installRStudio'].strip()
         self.installSPSS = config['cpd_assembly']['installSPSS'].strip()       
-        self.installStreams = config['cpd_assembly']['installStreams'].strip()
         self.installRuntimeGPUPy37 = config['cpd_assembly']['installRuntimeGPUPy37'].strip()
         self.installRuntimeR36 = config['cpd_assembly']['installRuntimeR36'].strip()
         self.installHEE = config['cpd_assembly']['installHEE'].strip()
@@ -722,7 +710,6 @@ class CPDInstall(object):
                 TR.info("debug","installSpark= %s" %self.installSpark)
                 TR.info("debug","installRStudio= %s" %self.installRStudio)
                 TR.info("debug","installSPSS= %s" %self.installSPSS)
-                TR.info("debug","installStreams= %s" %self.installStreams)
                 TR.info("debug","installRuntimeGPUPy37= %s" %self.installRuntimeGPUPy37)
                 TR.info("debug","installRuntimeR36= %s" %self.installRuntimeR36)
                 TR.info("debug","installHEE= %s" %self.installHEE)

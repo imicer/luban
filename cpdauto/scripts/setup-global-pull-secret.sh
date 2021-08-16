@@ -16,8 +16,5 @@ jq --argjson authinfo "$(</tmp/local_reg.json)" '.auths += $authinfo' /tmp/docke
 
 oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=/tmp/global_pull_secret.json
 
-# copy to current directory
-cp /tmp/global_pull_secret.json config.json
-
-# take a backup of dockerconfig.json after bedrock secret added. 
-cp /tmp/global_pull_secret.json /tmp/global_pull_secret.json_bedrock_backup
+# take a backup of dockerconfig.json after private image registry secret added. 
+cp /tmp/global_pull_secret.json /tmp/global_pull_secret.json_backup
