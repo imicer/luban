@@ -109,9 +109,6 @@ class CPDInstall(object):
     def installCPD(self,icpdInstallLogFile):
         """
         creates a OC project with user defined name
-        Downloads binary file from S3 and extracts it to /ibm folder
-        installs user selected services using transfer method
-
         """
 
         methodName = "installCPD"
@@ -447,7 +444,60 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
+        time.sleep(900)
+
         TR.info(methodName,"  Completed image pull related setting")
+    #endDef
+
+     def createOperatorGroups(self, icpdInstallLogFile):
+        methodName = "createOperatorGroups"
+        TR.info(methodName,"  Create Operator Groups for BedRock and CPD Operators")  
+
+        self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
+        try:
+            call(self.logincmd, shell=True,stdout=icpdInstallLogFile)
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        
+        TR.info(methodName,"oc login successfully")
+        
+        """
+        "oc apply -f bedrock-operator-group.yaml"
+        """
+
+        bedrock_operator_groups_template = "bedrock-operator-group.yaml"
+        TR.info(methodName,"Prepare for bedrock operator groups")
+        self.updateTemplateFile(bedrock_operator_groups_template, '${BEDROCK_NAMESPACE}', self.foundation_service_namespace)
+        
+
+        create_bedrock_operator_groups_cmd =  "oc apply -f " + bedrock_operator_groups_template
+        TR.info(methodName,"Create bedrock operator groups")
+        try:
+            retcode = check_output(['bash','-c', create_bedrock_operator_groups_cmd]) 
+            TR.info(methodName,"Create bedrock operator groups %s" %retcode) 
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
+
+        """
+        "oc apply -f cpd-operator-group.yaml"
+        """
+
+        cpd_operator_groups_template = "cpd-operator-group.yaml"
+        TR.info(methodName,"Prepare for cpd operator groups")
+        self.updateTemplateFile(cpd_operator_groups_template, '${CPD_OPERATORS_NAMESPACE}', self.cpd_operator_namespace)
+        
+
+        create_cpd_operator_groups_cmd =  "oc apply -f " + cpd_operator_groups_template
+        TR.info(methodName,"Create cpd operator groups")
+        try:
+            retcode = check_output(['bash','-c', create_cpd_operator_groups_cmd]) 
+            TR.info(methodName,"Create cpd operator groups %s" %retcode) 
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
+
+        time.sleep(300)
+
+        TR.info(methodName,"  Completed creating operator groups")
     #endDef
 
     def updateTemplateFile(self, source, placeHolder, value):
@@ -509,6 +559,79 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"Exception while installing service %s with message %s" %(assembly,e))
             self.rc = 1
+
+    def installCatalogSourceAirgap(self, assembly, caseName, inventoryName, icpdInstallLogFile):
+        """
+        method to install Catalog Source
+
+        """
+        methodName = "installCatalogSourceAirgap"
+  
+        #Create the catalog source
+
+        catalog_source_creation_cmd = self.installer_path + " case launch --case " + self.offline_dir_path + "/" + self.caseName + " --inventory " + inventoryName + " --namespace openshift-marketplace --action install-catalog --args \"--registry " + self.image_registry_url + " --inputDir " + self.offline_dir_path + " --recursive\""
+
+        TR.info(methodName,"Execute catalog source creation command for %s"%assembly)
+        try:
+            retcode = call(catalog_source_creation_cmd,shell=True, stdout=icpdInstallLogFile)
+            TR.info(methodName,"Execute catalog source creation command for %s returned %s"%(assembly,retcode))
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+            self.rc = 1
+
+
+     def installControlPlaneAirgap(self, assembly, load_from_path, icpdInstallLogFile):
+        """
+        method to install Cloud Pak for Data control plane
+
+        """
+        methodName = "installControlPlaneAirgap"
+  
+        #Create the IBM Cloud Pak foundational services catalog source
+
+        cs_foundcaiton_creation_cmd = self.installer_path + " case launch --case " + self.offline_dir_path + "/" + self.FoundationalService_Case_Name + " --inventory ibmCommonServiceOperatorSetup --namespace openshift-marketplace --action install-catalog --args \"--registry " + self.image_registry_url + " --inputDir " + self.offline_dir_path + " --recursive\""
+
+        TR.info(methodName,"Execute catalog source creation command for foundational services %s"%cs_foundcaiton_creation_cmd)
+        try:
+            retcode = call(cs_foundcaiton_creation_cmd,shell=True, stdout=icpdInstallLogFile)
+            TR.info(methodName,"Execute catalog source creation command for foundational services %s returned %s"%(assembly,retcode))
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        
+        #apply
+        apply_cmd = self.installer_path +" adm --assembly " + assembly + " --latest-dependency -n "+self.namespace+ " --load-from " + load_from_path + " --accept-all-licenses --apply | tee "+self.log_dir +"/"+assembly+"_apply.log"
+        TR.info(methodName,"Execute apply command for assembly %s"%apply_cmd)
+        try:
+            retcode = call(apply_cmd,shell=True, stdout=icpdInstallLogFile)
+            TR.info(methodName,"Executed apply command for assembly %s returned %s"%(assembly,retcode))
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        
+        #install
+        TR.info("debug","self.storage_type= %s" %self.storage_type)
+        TR.info("debug","self.storage_class= %s" %self.storage_class)
+        
+        if(self.storage_type == "portworx"):
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            install_cmd_for_print = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + base64.b64encode(self.ocToken).decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)    
+        elif(self.storage_type == "ocs"):
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config ocs --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            install_cmd_for_print = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config ocs --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + base64.b64encode(self.ocToken).decode("ascii")+ " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)
+        elif(self.storage_type == "nfs"):
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            install_cmd_for_print = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + base64.b64encode(self.ocToken).decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)
+        else:
+            TR.error(methodName,"Invalid storage type : %s"%self.storage_type)
+        try:
+            retcode = call(install_cmd,shell=True, stdout=icpdInstallLogFile)
+            TR.info(methodName,"Executed install command for assembly %s returned %s"%(assembly,retcode))
+        except CalledProcessError as e:
+            TR.error(methodName,"Exception while installing service %s with message %s" %(assembly,e))
+            self.rc = 1
+
 
     def installAssembliesAirgap(self, assembly, load_from_path, icpdInstallLogFile):
         """
@@ -636,6 +759,7 @@ class CPDInstall(object):
         self.config_image_pull = config['settings']['config_image_pull'].strip()
         self.log_dir = config['cpd_assembly']['log_dir'].strip()
         self.overall_log_file = config['cpd_assembly']['overall_log_file'].strip()
+        self.offline_dir_path = config['cpd_assembly']['offline_dir_path'].strip()
         self.installer_path = config['cpd_assembly']['installer_path'].strip()
         self.installWSL = config['cpd_assembly']['installWSL'].strip()
         self.installWML = config['cpd_assembly']['installWML'].strip()
