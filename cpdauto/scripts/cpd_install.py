@@ -449,7 +449,7 @@ class CPDInstall(object):
         TR.info(methodName,"  Completed image pull related setting")
     #endDef
 
-     def createOperatorGroups(self, icpdInstallLogFile):
+    def createOperatorGroups(self, icpdInstallLogFile):
         methodName = "createOperatorGroups"
         TR.info(methodName,"  Create Operator Groups for BedRock and CPD Operators")  
 
@@ -496,6 +496,39 @@ class CPDInstall(object):
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
 
         time.sleep(300)
+
+        TR.info(methodName,"  Completed creating operator groups")
+    #endDef
+
+    def createNamespaceScope(self, icpdInstallLogFile):
+        methodName = "createNamespaceScope"
+        TR.info(methodName,"Create NamespaceScope for enabling the IBM Cloud Pak for Data platform operator to watch the project where you will install IBM Cloud Pak for Data")  
+
+        self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
+        try:
+            call(self.logincmd, shell=True,stdout=icpdInstallLogFile)
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        
+        TR.info(methodName,"oc login successfully")
+        
+        """
+        "oc apply -f cpd-operators-namespace-scope.yaml"
+        """
+
+        cpd_operators_namespace_scope_template = "cpd-operators-namespace-scope.yaml"
+        TR.info(methodName,"Prepare for creating NamespaceScope to watch the project where you will install IBM Cloud Pak for Data")
+        self.updateTemplateFile(cpd_operators_namespace_scope_template, '${CPD_OPERATORS_NAMESPACE}', self.cpd_operator_namespace)
+
+        self.updateTemplateFile(cpd_operators_namespace_scope_template, '${CPD_INSTANCE_NAMESPACE}', self.cpd_instance_namespace)
+
+        create_cpd_operators_namespace_scope_cmd =  "oc apply -f " + cpd_operators_namespace_scope_template
+        TR.info(methodName,"Create NamespaceScope to watch the project where you will install IBM Cloud Pak for Data")
+        try:
+            retcode = check_output(['bash','-c', create_cpd_operators_namespace_scope_cmd]) 
+            TR.info(methodName,"Create NamespaceScope %s" %retcode) 
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output)) 
 
         TR.info(methodName,"  Completed creating operator groups")
     #endDef
@@ -559,6 +592,7 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"Exception while installing service %s with message %s" %(assembly,e))
             self.rc = 1
+    #endDef
 
     def installCatalogSourceAirgap(self, assembly, caseName, inventoryName, icpdInstallLogFile):
         """
@@ -578,9 +612,9 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
             self.rc = 1
+    #endDef
 
-
-     def installControlPlaneAirgap(self, assembly, load_from_path, icpdInstallLogFile):
+    def installControlPlaneAirgap(self, assembly, load_from_path, icpdInstallLogFile):
         """
         method to install Cloud Pak for Data control plane
 
