@@ -406,7 +406,7 @@ class CPDInstall(object):
     #endDef
 
     def configImagePull(self, icpdInstallLogFile):
-        ##setup-global-pull-secret-bedrock.sh, gen-config-json.sh, gen-registries-conf.sh
+        ##setup-global-pull-secret-bedrock.sh
         methodName = "configImagePull"
         TR.info(methodName,"  Start configuring image pull of Openshift Container Platform")  
 
@@ -530,7 +530,7 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output)) 
 
-        TR.info(methodName,"  Completed creating operator groups")
+        TR.info(methodName,"  Completed creating NamespaceScope")
     #endDef
 
     def updateTemplateFile(self, source, placeHolder, value):
@@ -612,6 +612,74 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
             self.rc = 1
+    #endDef
+
+    def createOperatorSubscription(self, assembly, icpdInstallLogFile):
+
+        methodName = "createOperatorSubscription"
+        TR.info(methodName,"Start creating Operator Subscription")  
+
+        self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
+        try:
+            call(self.logincmd, shell=True,stdout=icpdInstallLogFile)
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        
+        TR.info(methodName,"oc login successfully")
+
+
+         if(assembly == "Zen"):
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)    
+        elif(assembly == "WSL"):
+            
+        elif(assembly == "WML"):
+
+        else:
+            TR.error(methodName,"Invalid storage type : %s"%self.storage_type)
+
+        set_global_pull_secret_command  = "./setup-global-pull-secret " + self.image_registry_url + " " + self.image_registry_user  + " " + self.image_registry_password
+
+        TR.info(methodName,"Setting global pull secret with command %s"%set_global_pull_secret_command)
+        try:
+            crio_retcode = check_output(['bash','-c', set_global_pull_secret_command]) 
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        TR.info(methodName,"Setting global pull secret with command %s returned %s"%(create_crio_mc,crio_retcode))
+    #endDef
+
+    def createCustomResource(self, assembly,storge_type, icpdInstallLogFile):
+
+        methodName = "createOperatorSubscription"
+        TR.info(methodName,"Start creating Operator Subscription")  
+
+        self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
+        try:
+            call(self.logincmd, shell=True,stdout=icpdInstallLogFile)
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        
+        TR.info(methodName,"oc login successfully")
+
+
+         if(assembly == "Zen"):
+            install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)    
+        elif(assembly == "WSL"):
+            
+        elif(assembly == "WML"):
+
+        else:
+            TR.error(methodName,"Invalid storage type : %s"%self.storage_type)
+
+        set_global_pull_secret_command  = "./setup-global-pull-secret " + self.image_registry_url + " " + self.image_registry_user  + " " + self.image_registry_password
+
+        TR.info(methodName,"Setting global pull secret with command %s"%set_global_pull_secret_command)
+        try:
+            crio_retcode = check_output(['bash','-c', set_global_pull_secret_command]) 
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        TR.info(methodName,"Setting global pull secret with command %s returned %s"%(create_crio_mc,crio_retcode))
     #endDef
 
     def installControlPlaneAirgap(self, assembly, load_from_path, icpdInstallLogFile):
