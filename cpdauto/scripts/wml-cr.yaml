@@ -1,20 +1,15 @@
 apiVersion: wml.cpd.ibm.com/v1beta1
 kind: WmlBase
 metadata:
-  name: wml-cr
-  labels:
-    app.kubernetes.io/instance: wml-cr
-    app.kubernetes.io/managed-by: ibm-cpd-wml-operator
-    app.kubernetes.io/name: ibm-cpd-wml-operator
+  name: wml-cr     # This is the recommended name, but you can change it
+  namespace: ${CPD_INSTANCE_NAMESPACE}     # Replace with the project where you will install Watson Machine Learning
 spec:
-  scaleConfig: small
   is_35_upgrade: false
   ignoreForMaintenance: false
-  docker_registry_prefix: "cp.icr.io/cp/cpd"
-  storageClass: portworx-shared-gp3
-  storageVendor: portworx
-  wmlStatus: InProgress
-  version: "4.0.0"
+  docker_registry_prefix: cp.icr.io/cp/cpd
   license:
     accept: true
-    license: "Enterprise"    
+    license: {CPD_LICENSE}     # Specify the license you purchased
+  version: 4.0.0
+  storageVendor: {STORAGE_TYPE}
+  storageClass: {STORAGE_CLASS}          #if you use a different storage class, replace it with the appropriate storage class                      

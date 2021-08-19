@@ -1,12 +1,12 @@
 apiVersion: cpd.ibm.com/v1
 kind: Ibmcpd
 metadata:
-  name: ibmcpd-cr
-  namespace: CPD_NAMESPACE
+  name: ibmcpd-cr                                     # This is the recommended name, but you can change it
+  namespace: cpd-instance1                             # Replace with the project where you will install Cloud Pak for Data
 spec:
   license:
     accept: true
-    license: Enterprise
-  storageClass: portworx-shared-gp3
-  zenCoreMetadbStorageClass: portworx-shared-gp3
-  version: 4.0.1  ## Here documentation states to use 4.0.0, but failing. we found out to use 4.0.1 here and it seems to install successfullly. 
+    license: {CPD_LICENSE}                      # Specify the Cloud Pak for Data license you purchased
+  storageClass: {STORAGE_CLASS}                     # Replace with the name of a RWX storage class
+  zenCoreMetadbStorageClass: {ZEN_CORE_METADB_STORAGE_CLASS}        # (Recommended) Replace with the name of a RWO storage class
+  version: "4.0.1"

@@ -5,4 +5,4 @@ metadata:
   namespace: ${CPD_OPERATORS_NAMESPACE}
 spec:
   targetNamespaces:
-  - CPD_OPERATORS_NAMESPACE
+  - ${CPD_OPERATORS_NAMESPACE}
