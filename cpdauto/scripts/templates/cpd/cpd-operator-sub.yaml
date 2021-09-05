@@ -7,5 +7,5 @@ spec:
   channel: stable-v1
   installPlanApproval: Automatic
   name: cpd-platform-operator
-  source: ibm-operator-catalog
+  source: cpd-platform
   sourceNamespace: openshift-marketplace

@@ -130,13 +130,6 @@ class CPDInstall(object):
             except CalledProcessError as e:
                 TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
 
-            oc_new_project ="oc new-project " + self.cpd_operator_namespace
-            try:
-                retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
-                TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.cpd_operator_namespace,retcode))
-            except CalledProcessError as e:
-                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-
             self.createOperatorGroups(self, icpdInstallLogFile)
 
         if(self.installCPDControlPlane == "True"):
@@ -425,7 +418,7 @@ class CPDInstall(object):
         
         TR.info(methodName,"oc login successfully")
 
-        set_global_pull_secret_command  = "./setup-global-pull-secret " + self.image_registry_url + " " + self.image_registry_user  + " " + self.image_registry_password
+        set_global_pull_secret_command  = "./setup-global-pull-secret.sh " + self.image_registry_url + " " + self.image_registry_user  + " " + self.image_registry_password
 
         TR.info(methodName,"Setting global pull secret with command %s"%set_global_pull_secret_command)
         try:
@@ -548,7 +541,7 @@ class CPDInstall(object):
         """
         source_content = open(source).read()
         updated_source_content = source_content.replace(placeHolder, value)
-        updated_file = open(source + ".gen", 'w')
+        updated_file = open(source, 'w')
         updated_file.write(updated_source_content)
         updated_file.close()
     #endDef    

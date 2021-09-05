@@ -2,7 +2,7 @@ apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
   name: operatorgroup
-  namespace: ${BEDROCK_NAMESPACE}
+  namespace: BEDROCK_NAMESPACE
 spec:
   targetNamespaces:
-  - ${BEDROCK_NAMESPACE}
+  - BEDROCK_NAMESPACE
