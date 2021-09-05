@@ -1,14 +1,6 @@
 #!/bin/bash
 
 
-# Setup global_pull secret 
-./setup-global-pull-secret-bedrock.sh ${ENTITLEMENT_USER} ${ENTITLEMENT_KEY}
-
-ibmcloud login --apikey ${IBMCLOUD_APIKEY} -g ${IBMCLOUD_RG_NAME} -r ${REGION}
-
-./roks-update.sh ${CLUSTER_NAME}
-
-
 # # create bedrock catalog source 
 
 echo '*** executing **** oc create -f bedrock-catalog-source.yaml'

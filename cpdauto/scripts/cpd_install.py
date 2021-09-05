@@ -121,26 +121,33 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
-        oc_new_project ="oc new-project " + self.foundation_service_namespace
-        try:
-            retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
-            TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.foundation_service_namespace,retcode))
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
+        if(self.installFoundationalService == "True"):
+            TR.info(methodName, "Create namespaces for Foundational Services")
+            oc_new_project ="oc new-project " + self.foundation_service_namespace
+            try:
+                retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
+                TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.foundation_service_namespace,retcode))
+            except CalledProcessError as e:
+                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
 
-        oc_new_project ="oc new-project " + self.cpd_operator_namespace
-        try:
-            retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
-            TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.cpd_operator_namespace,retcode))
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+            oc_new_project ="oc new-project " + self.cpd_operator_namespace
+            try:
+                retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
+                TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.cpd_operator_namespace,retcode))
+            except CalledProcessError as e:
+                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
-        oc_new_project ="oc new-project " + self.cpd_instance_namespace
-        try:
-            retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
-            TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.cpd_instance_namespace,retcode))
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))      
+            self.createOperatorGroups(self, icpdInstallLogFile)
+
+        if(self.installCPDControlPlane == "True"):
+            oc_new_project ="oc new-project " + self.cpd_instance_namespace
+            try:
+                retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
+                TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.cpd_instance_namespace,retcode))
+            except CalledProcessError as e:
+                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))      
+            
+            self.createNamespaceScope()
 
         litestart = Utilities.currentTimeMillis()
         TR.info(methodName,"Start installing Lite package")
@@ -393,10 +400,10 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
-        db2-kubelet-config_cmd =  "oc apply -f ./templates/cpd/db2-kubelet-config-mc.yaml"
+        db2_kubelet_config_cmd =  "oc apply -f ./templates/cpd/db2-kubelet-config-mc.yaml"
         TR.info(methodName,"Configure kubelet to allow Db2U to make syscalls as needed.")
         try:
-            retcode = check_output(['bash','-c', db2-kubelet-config_cmd]) 
+            retcode = check_output(['bash','-c', db2_kubelet_config_cmd]) 
             TR.info(methodName,"Configured kubelet to allow Db2U to make syscalls %s" %retcode)  
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
@@ -530,6 +537,8 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output)) 
 
+        time.sleep(300)
+
         TR.info(methodName,"  Completed creating NamespaceScope")
     #endDef
 
@@ -537,10 +546,10 @@ class CPDInstall(object):
         """
         method to update placeholder values in templates
         """
-        source_file = open(source).read()
-        source_file = source_file.replace(placeHolder, value)
-        updated_file = open(source, 'w')
-        updated_file.write(source_file)
+        source_content = open(source).read()
+        updated_source_content = source_content.replace(placeHolder, value)
+        updated_file = open(source + ".gen", 'w')
+        updated_file.write(updated_source_content)
         updated_file.close()
     #endDef    
     def readFileContent(self,source):
@@ -612,6 +621,10 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
             self.rc = 1
+        
+        time.sleep(300)
+
+        #Status check to be addeded here
     #endDef
 
     def createOperatorSubscription(self, assembly, icpdInstallLogFile):
@@ -627,8 +640,12 @@ class CPDInstall(object):
         
         TR.info(methodName,"oc login successfully")
 
-
-         if(assembly == "Zen"):
+        if(assembly == "Bedrock"):
+            operator_sub_file = "bedrock-sub.yaml"
+            self.updateTemplateFile(operator_sub_file, '${FOUNDATION_SERVICE_NAMESPACE}', self.foundation_service_namespace)
+            create_operator_sub_cmd = "oc apply -f " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
+            TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)    
+        elif(assembly == "Zen"):
             install_cmd = self.installer_path + " install --assembly " + assembly + " --latest-dependency --arch x86_64 -n " + self.namespace + " --storageclass " + self.storage_class + " --override-config portworx --load-from " + load_from_path +" --cluster-pull-username " +self.ocp_admin_user + " --cluster-pull-password " + self.ocToken.decode("ascii") + " --cluster-pull-prefix image-registry.openshift-image-registry.svc:5000/" + self.namespace + " --verbose --accept-all-licenses --insecure-skip-tls-verify | tee "+self.log_dir +"/"+assembly+"_install.log"
             TR.info(methodName,"Execute install command for assembly %s"%install_cmd_for_print)    
         elif(assembly == "WSL"):
@@ -646,11 +663,14 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
         TR.info(methodName,"Setting global pull secret with command %s returned %s"%(create_crio_mc,crio_retcode))
+   
+        time.sleep(300)
+
     #endDef
 
     def createCustomResource(self, assembly,storge_type, icpdInstallLogFile):
 
-        methodName = "createOperatorSubscription"
+        methodName = "createCustomResource"
         TR.info(methodName,"Start creating Operator Subscription")  
 
         self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
@@ -881,6 +901,7 @@ class CPDInstall(object):
         self.foundation_service_namespace = config['cpd_assembly']['foundation_service_namespace'].strip()
         self.cpd_operator_namespace = config['cpd_assembly']['cpd_operator_namespace'].strip()
         self.cpd_instance_namespace = config['cpd_assembly']['cpd_instance_namespace'].strip()
+        self.cpd_license = config['cpd_assembly']['cpd_license'].strip()
         TR.info(methodName,"Load installation configuration completed")
         TR.info(methodName,"Installation configuration:" + self.ocp_admin_user + "-" + self.ocp_admin_password  + "-" + self.installer_path)
     #endDef
