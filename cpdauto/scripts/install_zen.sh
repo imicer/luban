@@ -12,7 +12,9 @@ ZEN_CORE_METADB_STORAGE_CLASS=$8
 
 # # Clone yaml files from the templates
 unalias cp
-cp ./templates/cpd/bedrock-operator-group.yaml bedrock-operator-group.yaml
+cp ./templates/cpd/cpd-operator-group.yaml cpd-operator-group.yaml
+cp ./templates/cpd/cpd-operator-sub.yaml cpd-operator-sub.yaml
+cp ./templates/cpd/cpd-operators-namespace-scope.yaml cpd-operators-namespace-scope.yaml
 
 # Create zen catalog source 
 
@@ -46,6 +48,8 @@ result=$(oc apply -f cpd-operator-group.yaml)
 echo $result
 sleep 1m
 
+oc patch NamespaceScope cpd-operators -n ${CPD_OPERATORS_NAMESPACE} --type=merge --patch='{"spec": {"csvInjector": {"enable": true} } }'
+
 
 sed -i -e s#CPD_OPERATORS_NAMESPACE#${CPD_OPERATORS_NAMESPACE}#g cpd-operator-sub.yaml
 echo '*** executing **** oc apply -f cpd-operator-sub.yaml'
@@ -53,6 +57,37 @@ result=$(oc apply -f cpd-operator-sub.yaml)
 echo $result
 sleep 60
 
+while true; do
+if oc get sub -n ${CPD_OPERATORS_NAMESPACE} cpd-operator -o jsonpath='{.status.installedCSV} {"\n"}' | grep cpd-platform-operator.v2.0.3 >/dev/null 2>&1; then
+  echo -e "\ncpd-platform-operator.v2.0.3 was successfully created."
+  break
+fi
+sleep 10
+done
+
+while true; do
+if oc get csv -n ${CPD_OPERATORS_NAMESPACE} cpd-platform-operator.v2.0.3 -o jsonpath='{ .status.phase } : { .status.message} {"\n"}' | grep "Succeeded : install strategy completed with no errors" >/dev/null 2>&1; then
+  echo -e "\nInstall strategy completed with no errors"
+  break
+fi
+sleep 10
+done
+
+while true; do
+if oc get deployments -n ${CPD_OPERATORS_NAMESPACE} -l olm.owner="cpd-platform-operator.v2.0.3" -o jsonpath="{.items[0].status.availableReplicas} {'\n'}" | grep 1 >/dev/null 2>&1; then
+  echo -e "\ncpd-platform-operator.v2.0.3 is ready."
+  break
+fi
+sleep 10
+done
+
+while true; do
+if oc get pods -n ${CPD_OPERATORS_NAMESPACE} | grep cpd-platform-operator-manager >/dev/null 2>&1; then
+  echo -e "\ncpd-platform-operator-manager pods running"
+  break
+fi
+sleep 10
+done
 
 
 # Create zen namespace
@@ -83,11 +118,11 @@ sleep 30
 
 # Create lite CR: 
 sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g zen-lite-cr.yaml
-sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g zen-lite-cr.
-sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g zen-lite-cr.yaml
-sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g zen-lite-cr.yaml
-echo '*** executing **** oc create -f zen-lite-cr.yaml'
-result=$(oc create -f zen-lite-cr.yaml)
+sed -i -e s#CPD_LICENSE#${CPD_LICENSE}#g zen-lite-cr.
+sed -i -e s#STORAGE_CLASS#${STORAGE_CLASS}#g zen-lite-cr.yaml
+sed -i -e s#ZEN_CORE_METADB_STORAGE_CLASS#${ZEN_CORE_METADB_STORAGE_CLASS}#g zen-lite-cr.yaml
+echo '*** executing **** oc apply -f zen-lite-cr.yaml'
+result=$(oc apply -f zen-lite-cr.yaml)
 echo $result
 
 # check if the zen operator pod is up and running.
@@ -102,9 +137,3 @@ echo $result
 # check the lite cr status
 
 ./check-cr-status.sh ibmcpd ibmcpd-cr ${NAMESPACE} controlPlaneStatus
-
-
-wget https://github.com/IBM/cloud-pak-cli/releases/latest/download/cloudctl-linux-amd64.tar.gz
-wget https://github.com/IBM/cloud-pak-cli/releases/latest/download/cloudctl-linux-amd64.tar.gz.sig
-tar -xvf cloudctl-linux-amd64.tar.gz -C /usr/local/bin
-mv /usr/local/bin/cloudctl-linux-amd64 /usr/local/bin/cloudctl

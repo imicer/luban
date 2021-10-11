@@ -108,11 +108,23 @@ class CPDInstall(object):
  
     def installCPD(self,icpdInstallLogFile):
         """
-        creates a OC project with user defined name
         """
 
         methodName = "installCPD"
-        os.chmod(self.installer_path,stat.S_IEXEC)
+
+
+        OFFLINEDIR=$1
+        CASE_PACKAGE_NAME=$2
+        PRIVATE_REGISTRY=$3
+        CPD_OPERATORS_NAMESPACE=$4
+        CPD_INSTANCE_NAMESPACE=$5
+        CPD_LICENSE=$6
+        STORAGE_CLASS=$7
+        ZEN_CORE_METADB_STORAGE_CLASS=$8
+
+        private_registry = self.image_registry_url.decode("ascii")
+        offline_installation_dir = self.offline_dir_path.decode("ascii")
+        #os.chmod(self.installer_path,stat.S_IEXEC)
       
         try:
             oc_login = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
@@ -121,32 +133,56 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
-        if(self.installFoundationalService == "True"):
-            TR.info(methodName, "Create namespaces for Foundational Services")
-            oc_new_project ="oc new-project " + self.foundation_service_namespace
-            try:
-                retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
-                TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.foundation_service_namespace,retcode))
-            except CalledProcessError as e:
-                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
 
-            self.createOperatorGroups(self, icpdInstallLogFile)
+        if(self.installFoundationalService == "True"):
+            TR.info(methodName,"Start installing Foundational Service")
+            
+            bedrock_start = Utilities.currentTimeMillis()
+            
+            install_foundational_service_command  = "./install_bedrock.sh " + offline_installation_dir + " " + self.FoundationalService_Case_Name  + " " + self.private_registry + " " + self.foundation_service_namespace
+
+            TR.info(methodName,"Install Foundational Service with command %s"%install_foundational_service_command)
+            
+            try:
+                install_foundational_service_retcode = check_output(['bash','-c', install_foundational_service_command]) 
+            except CalledProcessError as e:
+                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+            
+            TR.info(methodName,"Install Foundational Service with command %s returned %s"%(install_foundational_service_command,install_foundational_service_retcode))
+            
+            bedrock_end = Utilities.currentTimeMillis()
+            TR.info(methodName,"Install Foundational Service completed")
+            self.printTime(bedrock_start, bedrock_end, "Install Foundational Service")   
 
         if(self.installCPDControlPlane == "True"):
-            oc_new_project ="oc new-project " + self.cpd_instance_namespace
-            try:
-                retcode = call(oc_new_project,shell=True, stdout=icpdInstallLogFile)
-                TR.info(methodName,"Create new project with user defined project name %s,retcode=%s" %(self.cpd_instance_namespace,retcode))
-            except CalledProcessError as e:
-                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))      
-            
-            self.createNamespaceScope()
+            TR.info(methodName,"Start installing Cloud Pak for Data Control Plan (Zen)") 
 
-        litestart = Utilities.currentTimeMillis()
-        TR.info(methodName,"Start installing Lite package")
-        self.installAssembliesAirgap("lite",self.default_load_from,icpdInstallLogFile)
-        liteend = Utilities.currentTimeMillis()
-        self.printTime(litestart, liteend, "Installing Lite")
+            zen_core_metadb_storage_class = self.storage_class
+            
+            if(self.storage_type = "nfs"):
+                zen_core_metadb_storage_class = "" 
+            elif(self.storage_type = "portowrx"):
+                zen_core_metadb_storage_class = "" 
+            elif:
+                zen_core_metadb_storage_class = "ocs-storagecluster-ceph-rbd" 
+
+
+            bedrock_start = Utilities.currentTimeMillis()
+            
+            install_control_plane_command  = "./install_zen.sh " + offline_installation_dir + " " + self.FoundationalService_Case_Name  + " " + self.private_registry + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + + " " + self.storage_class + " " + zen_core_metadb_storage_class
+
+            TR.info(methodName,"Install Control Plane with command %s"%install_control_plane_command)
+            
+            try:
+                install_control_plane_retcode = check_output(['bash','-c', install_control_plane_command]) 
+            except CalledProcessError as e:
+                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+            
+            TR.info(methodName,"Install Control Plane with command %s returned %s"%(install_control_plane_command,install_control_plane_retcode))
+            
+            bedrock_end = Utilities.currentTimeMillis()
+            TR.info(methodName,"Install Control Plane completed")
+            self.printTime(bedrock_start, bedrock_end, "Install Control Plane")   
 
         get_cpd_route_cmd = "oc get route -n "+self.namespace+ " | grep '"+self.namespace+"' | awk '{print $2}'"
         TR.info(methodName, "Get CPD URL")
@@ -157,15 +193,34 @@ class CPDInstall(object):
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
         if(self.installWSL == "True"):
-            TR.info(methodName,"Start installing WSL package")
-            wslstart = Utilities.currentTimeMillis()
-            if(self.installWSL_load_from == "NA"):
-                self.installAssembliesAirgap("wsl",self.default_load_from,icpdInstallLogFile)
-            else:
-                self.installAssembliesAirgap("wsl",self.installWSL_load_from,icpdInstallLogFile)
-            wslend = Utilities.currentTimeMillis()
-            TR.info(methodName,"WSL package installation completed")
-            self.printTime(wslstart, wslend, "Installing WSL")
+            TR.info(methodName,"Start installing Watson Studio Local") 
+
+            zen_core_metadb_storage_class = self.storage_class
+            
+            if(self.storage_type = "nfs"):
+                zen_core_metadb_storage_class = "" 
+            elif(self.storage_type = "portowrx"):
+                zen_core_metadb_storage_class = "" 
+            elif:
+                zen_core_metadb_storage_class = "ocs-storagecluster-ceph-rbd" 
+
+
+            bedrock_start = Utilities.currentTimeMillis()
+            
+            install_control_plane_command  = "./install_zen.sh " + offline_installation_dir + " " + self.FoundationalService_Case_Name  + " " + self.private_registry + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + + " " + self.storage_class + " " + zen_core_metadb_storage_class
+
+            TR.info(methodName,"Install Control Plane with command %s"%install_control_plane_command)
+            
+            try:
+                install_control_plane_retcode = check_output(['bash','-c', install_control_plane_command]) 
+            except CalledProcessError as e:
+                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+            
+            TR.info(methodName,"Install Control Plane with command %s returned %s"%(install_control_plane_command,install_control_plane_retcode))
+            
+            bedrock_end = Utilities.currentTimeMillis()
+            TR.info(methodName,"Install Control Plane completed")
+            self.printTime(bedrock_start, bedrock_end, "Install Control Plane")   
         
         if(self.installWML == "True"):
             TR.info(methodName,"Start installing WML package")
@@ -748,16 +803,15 @@ class CPDInstall(object):
             self.rc = 1
 
 
-    def installAssembliesAirgap(self, assembly, load_from_path, icpdInstallLogFile):
+    def installAssembliesAirgap(self, assembly, icpdInstallLogFile):
         """
         method to install assemlies
-        for each assembly this method will execute adm command to apply all prerequistes
-        Images will be pushed to local registry
         Installation will be done for the assembly using local registry
+
         """
         methodName = "installAssembliesAirgap"
 
-        registry = self.regsitry.decode("ascii")+"/"+self.namespace
+        private_registry = self.image_registry_url.decode("ascii")
   
         #push
         push_cmd = self.installer_path + " preload-images --assembly " + assembly + " --action push --load-from " + load_from_path + " --transfer-image-to " + registry + " --target-registry-username "+ self.ocp_admin_user + " --target-registry-password "+ self.ocToken.decode("ascii") + " --insecure-skip-tls-verify --accept-all-licenses | tee "+self.log_dir +"/"+assembly+"_push.log"

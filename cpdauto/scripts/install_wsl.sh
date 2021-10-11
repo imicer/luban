@@ -1,25 +1,16 @@
 #!/bin/bash
 
-wget https://raw.githubusercontent.com/IBM/cloud-pak/master/repo/case/ibm-wsl-2.0.0.tgz
 
-# Install wsl operator using CLI (OLM)
 
-CASE_PACKAGE_NAME="ibm-wsl-2.0.0.tgz"
+# Install wsl operator 
 
-oc project ${OP_NAMESPACE}
+sed -i -e s#OPERATOR_NAMESPACE#${OP_NAMESPACE}#g wsl-sub.yaml
 
-cloudctl  case launch --case ./${CASE_PACKAGE_NAME} \
-    --tolerance 1 \
-    --namespace openshift-marketplace \
-    --action installCatalog \
-    --inventory wslSetup 
+echo '*** executing **** oc create -f wsl-sub.yaml'
+result=$(oc create -f wsl-sub.yaml)
+echo $result
+sleep 1m
 
-cloudctl case launch --case ./${CASE_PACKAGE_NAME} \
-    --tolerance 1 \
-    --namespace ${OP_NAMESPACE}         \
-    --action installOperator \
-    --inventory wslSetup 
-    # --args "--registry cp.icr.io"
 
 # Checking if the wsl operator pods are ready and running. 
 
@@ -30,10 +21,10 @@ cloudctl case launch --case ./${CASE_PACKAGE_NAME} \
 oc project ${NAMESPACE}
 
 # Create wsl CR: 
-
+sed -i -e s#CPD_NAMESPACE#${NAMESPACE}#g wsl-cr.yaml
 result=$(oc create -f wsl-cr.yaml)
 echo $result
 
-# check the CCS cr status
+# check the WSL cr status
 
 ./check-cr-status.sh ws ws-cr ${NAMESPACE} wsStatus

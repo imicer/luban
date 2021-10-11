@@ -41,6 +41,7 @@ result=$(oc apply -f bedrock-operator-group.yaml)
 echo $result
 sleep 1m
 
+oc patch NamespaceScope common-service -n ${BEDROCK_NAMESPACE} --type=merge --patch='{"spec": {"csvInjector": {"enable": true} } }'
 
 # Create bedrock subscription. This will deploy the bedrock: 
 sed -i -e s#BEDROCK_NAMESPACE#${BEDROCK_NAMESPACE}#g bedrock-sub.yaml
