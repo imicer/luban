@@ -114,15 +114,13 @@ echo $result
 sleep 30
 
 
-
-
 # Create lite CR: 
-sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g zen-lite-cr.yaml
-sed -i -e s#CPD_LICENSE#${CPD_LICENSE}#g zen-lite-cr.
-sed -i -e s#STORAGE_CLASS#${STORAGE_CLASS}#g zen-lite-cr.yaml
-sed -i -e s#ZEN_CORE_METADB_STORAGE_CLASS#${ZEN_CORE_METADB_STORAGE_CLASS}#g zen-lite-cr.yaml
-echo '*** executing **** oc apply -f zen-lite-cr.yaml'
-result=$(oc apply -f zen-lite-cr.yaml)
+sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g ibmcpd-cr.yaml
+sed -i -e s#CPD_LICENSE#${CPD_LICENSE}#g ibmcpd-cr.yaml
+sed -i -e s#STORAGE_CLASS#${STORAGE_CLASS}#g ibmcpd-cr.yaml
+sed -i -e s#ZEN_CORE_METADB_STORAGE_CLASS#${ZEN_CORE_METADB_STORAGE_CLASS}#g ibmcpd-cr.yaml
+echo '*** executing **** oc create -f ibmcpd-cr.yaml'
+result=$(oc create -f ibmcpd-cr.yaml)
 echo $result
 
 # check if the zen operator pod is up and running.
@@ -136,4 +134,4 @@ echo $result
 
 # check the lite cr status
 
-./check-cr-status.sh ibmcpd ibmcpd-cr ${NAMESPACE} controlPlaneStatus
+./check-cr-status.sh ibmcpd ibmcpd-cr ${CPD_INSTANCE_NAMESPACE} controlPlaneStatus

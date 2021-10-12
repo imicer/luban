@@ -2,6 +2,17 @@
 
 
 
+OFFLINEDIR=$1
+CASE_PACKAGE_NAME=$2
+PRIVATE_REGISTRY=$3
+CPD_OPERATORS_NAMESPACE=$4
+CPD_INSTANCE_NAMESPACE=$5
+CPD_LICENSE=$6
+STORAGE_CLASS=$7
+
+# # Clone yaml files from the templates
+unalias cp
+cp ./templates/cpd/wsl-sub.yaml wsl-sub.yaml
 # Install wsl operator 
 
 sed -i -e s#OPERATOR_NAMESPACE#${OP_NAMESPACE}#g wsl-sub.yaml
