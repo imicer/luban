@@ -457,7 +457,7 @@ class CPDInstall(object):
             crio_retcode = check_output(['bash','-c', set_global_pull_secret_command]) 
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-        TR.info(methodName,"Setting global pull secret with command %s returned %s"%(create_crio_mc,crio_retcode))
+        TR.info(methodName,"Setting global pull secret with command %s returned %s"%(set_global_pull_secret_command,crio_retcode))
         
         """
         "oc apply -f ${local.ocptemplates}/image_content_source_policy.yaml"
