@@ -704,6 +704,7 @@ class CPDInstall(object):
         self.installWKC = config['cpd_assembly']['installWKC'].strip()
         self.installSpark = config['cpd_assembly']['installSpark'].strip()
         self.installCDE = config['cpd_assembly']['installCDE'].strip()
+        self.installDMC = config['cpd_assembly']['installDMC'].strip()
         self.installDV = config['cpd_assembly']['installDV'].strip()
         self.installOSWML = config['cpd_assembly']['installOSWML'].strip()
         self.installRStudio = config['cpd_assembly']['installRStudio'].strip()
