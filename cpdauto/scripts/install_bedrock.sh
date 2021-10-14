@@ -6,7 +6,8 @@ PRIVATE_REGISTRY=$3
 BEDROCK_NAMESPACE=$4
 
 # # Clone yaml files from the templates
-if [[ $(type -t cp) == "alias" ]] then
+if [[ $(type -t cp) == "alias" ]]
+then
   unalias cp
   echo "unalias cp completed."
 fi
