@@ -112,8 +112,8 @@ class CPDInstall(object):
 
         methodName = "installCPD"
 
-        private_registry = self.image_registry_url.decode("ascii")
-        offline_installation_dir = self.offline_dir_path.decode("ascii")
+        #private_registry = self.image_registry_url
+        offline_installation_dir = self.offline_dir_path
         #os.chmod(self.installer_path,stat.S_IEXEC)
       
         try:
@@ -197,17 +197,17 @@ class CPDInstall(object):
             
             install_wsl_command  = "./install_wsl.sh " + offline_installation_dir + " " + self.WSL_Case_Name  + " " + self.private_registry + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_type + " " + self.storage_class
 
-            TR.info(methodName,"Install Control Plane with command %s"%install_control_plane_command)
+            TR.info(methodName,"Install Watson Studio with command %s"%install_wsl_command)
             
             try:
-                install_control_plane_retcode = check_output(['bash','-c', install_control_plane_command]) 
+                install_wsl_retcode = check_output(['bash','-c', install_wsl_command]) 
             except CalledProcessError as e:
                 TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
             
-            TR.info(methodName,"Install Control Plane with command %s returned %s"%(install_control_plane_command,install_control_plane_retcode))
+            TR.info(methodName,"Install Watson Studio with command %s returned %s"%(install_wsl_command,install_wsl_retcode))
             
             bedrock_end = Utilities.currentTimeMillis()
-            TR.info(methodName,"Install Control Plane completed")
+            TR.info(methodName,"Install Watson Studio completed")
             self.printTime(bedrock_start, bedrock_end, "Install Control Plane")   
         
         if(self.installWML == "True"):
