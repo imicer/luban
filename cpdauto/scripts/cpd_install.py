@@ -338,33 +338,7 @@ class CPDInstall(object):
         etm, ets = divmod(elapsedTime,60)
         eth, etm = divmod(etm,60) 
         TR.info(methodName,"Elapsed time (hh:mm:ss): %d:%02d:%02d for %s" % (eth,etm,ets,text))
-    #endDef
-
-    def getToken(self,icpdInstallLogFile):
-        """
-        method to get sa token to be used to push and pull from local docker registry
-        """
-        methodName = "getToken"
-        create_sa_cmd = "oc create serviceaccount cpdtoken"
-        TR.info(methodName,"Create service account cpdtoken %s"%create_sa_cmd)
-        try:
-            retcode = call(create_sa_cmd,shell=True, stdout=icpdInstallLogFile)
-            TR.info(methodName,"Created service account cpdtoken %s"%retcode)
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-
-        addrole_cmd = "oc policy add-role-to-user admin system:serviceaccount:"+self.namespace+":cpdtoken"
-        TR.info(methodName," Add role to service account %s"%addrole_cmd)
-        try:
-            retcode = call(addrole_cmd,shell=True, stdout=icpdInstallLogFile)
-            TR.info(methodName,"Role added to service account %s"%retcode)
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-
-        get_token_cmd = "oc serviceaccounts get-token cpdtoken"
-        TR.info(methodName,"Retrieve token from service account %s"%get_token_cmd)
-        return check_output(['bash','-c', get_token_cmd])
-    #endDef  
+    #endDef 
 
     def changeNodeSettings(self, icpdInstallLogFile):
         methodName = "changeNodeSettings"
@@ -455,92 +429,6 @@ class CPDInstall(object):
         #time.sleep(900)
 
         TR.info(methodName,"  Completed image pull related setting")
-    #endDef
-
-    def createOperatorGroups(self, icpdInstallLogFile):
-        methodName = "createOperatorGroups"
-        TR.info(methodName,"  Create Operator Groups for BedRock and CPD Operators")  
-
-        self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
-        try:
-            call(self.logincmd, shell=True,stdout=icpdInstallLogFile)
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-        
-        TR.info(methodName,"oc login successfully")
-        
-        """
-        "oc apply -f bedrock-operator-group.yaml"
-        """
-
-        bedrock_operator_groups_template = "bedrock-operator-group.yaml"
-        TR.info(methodName,"Prepare for bedrock operator groups")
-        self.updateTemplateFile(bedrock_operator_groups_template, '${BEDROCK_NAMESPACE}', self.foundation_service_namespace)
-        
-
-        create_bedrock_operator_groups_cmd =  "oc apply -f " + bedrock_operator_groups_template
-        TR.info(methodName,"Create bedrock operator groups")
-        try:
-            retcode = check_output(['bash','-c', create_bedrock_operator_groups_cmd]) 
-            TR.info(methodName,"Create bedrock operator groups %s" %retcode) 
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
-
-        """
-        "oc apply -f cpd-operator-group.yaml"
-        """
-
-        cpd_operator_groups_template = "cpd-operator-group.yaml"
-        TR.info(methodName,"Prepare for cpd operator groups")
-        self.updateTemplateFile(cpd_operator_groups_template, '${CPD_OPERATORS_NAMESPACE}', self.cpd_operator_namespace)
-        
-
-        create_cpd_operator_groups_cmd =  "oc apply -f " + cpd_operator_groups_template
-        TR.info(methodName,"Create cpd operator groups")
-        try:
-            retcode = check_output(['bash','-c', create_cpd_operator_groups_cmd]) 
-            TR.info(methodName,"Create cpd operator groups %s" %retcode) 
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
-
-        time.sleep(300)
-
-        TR.info(methodName,"  Completed creating operator groups")
-    #endDef
-
-    def createNamespaceScope(self, icpdInstallLogFile):
-        methodName = "createNamespaceScope"
-        TR.info(methodName,"Create NamespaceScope for enabling the IBM Cloud Pak for Data platform operator to watch the project where you will install IBM Cloud Pak for Data")  
-
-        self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
-        try:
-            call(self.logincmd, shell=True,stdout=icpdInstallLogFile)
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-        
-        TR.info(methodName,"oc login successfully")
-        
-        """
-        "oc apply -f cpd-operators-namespace-scope.yaml"
-        """
-
-        cpd_operators_namespace_scope_template = "cpd-operators-namespace-scope.yaml"
-        TR.info(methodName,"Prepare for creating NamespaceScope to watch the project where you will install IBM Cloud Pak for Data")
-        self.updateTemplateFile(cpd_operators_namespace_scope_template, '${CPD_OPERATORS_NAMESPACE}', self.cpd_operator_namespace)
-
-        self.updateTemplateFile(cpd_operators_namespace_scope_template, '${CPD_INSTANCE_NAMESPACE}', self.cpd_instance_namespace)
-
-        create_cpd_operators_namespace_scope_cmd =  "oc apply -f " + cpd_operators_namespace_scope_template
-        TR.info(methodName,"Create NamespaceScope to watch the project where you will install IBM Cloud Pak for Data")
-        try:
-            retcode = check_output(['bash','-c', create_cpd_operators_namespace_scope_cmd]) 
-            TR.info(methodName,"Create NamespaceScope %s" %retcode) 
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output)) 
-
-        time.sleep(300)
-
-        TR.info(methodName,"  Completed creating NamespaceScope")
     #endDef
 
     def updateTemplateFile(self, source, placeHolder, value):
