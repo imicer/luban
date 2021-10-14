@@ -446,60 +446,7 @@ class CPDInstall(object):
         content = file.read()
         file.close()
         return content.rstrip()
- 
-    def validateInstall(self, icpdInstallLogFile):
-        """
-            This method is used to validate the installation at the end. At times some services fails and it is not reported. 
-            We use this method to check if cpd operator is up and running. We will then get the helm list of deployed services and validate for each of the services selected by user. IF the count adds up to the defined count then installation is successful. Else  will be flagged it as failure back to cloud Formation.
-        """
-
-        methodName = "validateInstall"
-        count = 3
-        TR.info(methodName,"Validate Installation status")
-        if(self.installDV == "True"):
-            count = count+1
-        if(self.installOSWML == "True"):
-            count = count+1    
-        if(self.installSpark == "True"):
-            count = count+1    
-        if(self.installWKC == "True"):
-            count = count+6
-        if(self.installCDE == "True"):
-            count = count+1
-        if(self.installWML == "True"):
-            count = count+2
-        if(self.installWSL == "True"):
-            count = count+4            
-
-        # CCS Count
-        if(self.installCDE == "True" or self.installWKC == "True" or self.installWSL == "True" or self.installWML == "True"):
-            count = count+8
-        # DR count    
-        if(self.installWSL == "True" or self.installWKC == "True"):
-            count = count+1                
-
-        operator_pod = "oc get pods | grep cpd-install-operator | awk '{print $1}'"
-        operator_status = "oc get pods | grep cpd-install-operator | awk '{print $3}'"
-        validate_cmd = "oc exec -it $(oc get pods | grep cpd-install-operator | awk '{print $1}') -- helm list --tls"
-        operator = check_output(['bash','-c',operator_pod])
-        TR.info(methodName,"Operator pod %s"%operator)
-        if(operator == ""):
-            self.rc = 1
-            return
-        op_status = check_output(['bash','-c',operator_status])
-        TR.info(methodName,"Operator pod status is %s"%op_status)
-        if(op_status.rstrip()!="Running"):
-            self.rc = 1
-            return   
-        install_status = check_output(['bash','-c',validate_cmd])
-        TR.info(methodName,"Installation status is %s"%install_status)
-        #TR.info(methodName,"Actual Count is %s Deployed count is %s"%(count,install_status.count("DEPLOYED")))
-        #if(install_status.count("DEPLOYED")< count):
-        #    self.rc = 1
-        #    TR.info(methodName,"Installation Deployed count  is %s"%install_status.count("DEPLOYED"))
-        #    return   
-
-    #endDef          
+   
     
     def _loadConf(self):
         methodName = "loadConf"
@@ -611,14 +558,6 @@ class CPDInstall(object):
                 
                 self.installStatus = "CPD Installation completed"
                 TR.info("debug","Installation status - %s" %self.installStatus)
-
-
-                self.validateInstall(icpdInstallLogFile)
-
-
-                self.installStatus = "Finished validating installation"
-                TR.info("debug","Installation status - %s" %self.installStatus)
-
             #endWith    
             
         except Exception as e:
