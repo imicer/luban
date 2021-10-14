@@ -639,6 +639,8 @@ class CPDInstall(object):
         self.overall_log_file = config['cpd_assembly']['overall_log_file'].strip()
         self.offline_dir_path = config['cpd_assembly']['offline_dir_path'].strip()
         self.installer_path = config['cpd_assembly']['installer_path'].strip()
+        self.installFoundationalService = config['cpd_assembly']['installFoundationalService'].strip()
+        self.installCPDControlPlane = config['cpd_assembly']['installCPDControlPlane'].strip()
         self.installWSL = config['cpd_assembly']['installWSL'].strip()
         self.installWML = config['cpd_assembly']['installWML'].strip()
         self.installWKC = config['cpd_assembly']['installWKC'].strip()
@@ -703,7 +705,8 @@ class CPDInstall(object):
                 TR.info("debug","foundation_service_namespace= %s" %self.foundation_service_namespace)
                 TR.info("debug","cpd_operator_namespace= %s" %self.cpd_operator_namespace)
                 TR.info("debug","cpd_instance_namespace= %s" %self.cpd_instance_namespace)
-
+                TR.info("debug","installFoundationalService= %s" %self.installFoundationalService)
+                TR.info("debug","installCPDControlPlane= %s" %self.installCPDControlPlane)               
                 TR.info("debug","installWSL= %s" %self.installWSL)
                 TR.info("debug","installWML= %s" %self.installWML)
                 TR.info("debug","installWKC= %s" %self.installWKC)
