@@ -130,7 +130,7 @@ class CPDInstall(object):
             
             bedrock_start = Utilities.currentTimeMillis()
             
-            install_foundational_service_command  = "./install_bedrock.sh " + offline_installation_dir + " " + self.FoundationalService_Case_Name  + " " + self.private_registry + " " + self.foundation_service_namespace
+            install_foundational_service_command  = "./install_bedrock.sh " + offline_installation_dir + " " + self.FoundationalService_Case_Name  + " " + self.image_registry_url + " " + self.foundation_service_namespace
 
             TR.info(methodName,"Install Foundational Service with command %s"%install_foundational_service_command)
             
@@ -156,7 +156,7 @@ class CPDInstall(object):
 
             bedrock_start = Utilities.currentTimeMillis()
             
-            install_control_plane_command  = "./install_zen.sh " + offline_installation_dir + " " + self.CPDControlPlane_Case_Name  + " " + self.private_registry + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_class + " " + zen_core_metadb_storage_class
+            install_control_plane_command  = "./install_zen.sh " + offline_installation_dir + " " + self.CPDControlPlane_Case_Name  + " " + self.image_registry_url + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_class + " " + zen_core_metadb_storage_class
 
             TR.info(methodName,"Install Control Plane with command %s"%install_control_plane_command)
             
@@ -185,7 +185,7 @@ class CPDInstall(object):
 
             bedrock_start = Utilities.currentTimeMillis()
             
-            install_wsl_command  = "./install_wsl.sh " + offline_installation_dir + " " + self.WSL_Case_Name  + " " + self.private_registry + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_type + " " + self.storage_class
+            install_wsl_command  = "./install_wsl.sh " + offline_installation_dir + " " + self.WSL_Case_Name  + " " + self.image_registry_url + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_type + " " + self.storage_class
 
             TR.info(methodName,"Install Watson Studio with command %s"%install_wsl_command)
             
@@ -453,7 +453,7 @@ class CPDInstall(object):
         "oc apply -f ${local.ocptemplates}/image_content_source_policy.yaml"
         """
 
-        image_content_source_policy_cmd =  "oc apply -f " + "./setup-img-content-source-policy.sh " + self.image_registry_url
+        image_content_source_policy_cmd = "./setup-img-content-source-policy.sh " + self.image_registry_url
         TR.info(methodName,"Create image content source policy")
         try:
             retcode = check_output(['bash','-c', image_content_source_policy_cmd]) 
