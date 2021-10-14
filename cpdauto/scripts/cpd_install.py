@@ -114,15 +114,6 @@ class CPDInstall(object):
 
         #private_registry = self.image_registry_url
         offline_installation_dir = self.offline_dir_path
-        #os.chmod(self.installer_path,stat.S_IEXEC)
-      
-        try:
-            oc_login = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
-            retcode = call(oc_login,shell=True, stdout=icpdInstallLogFile)
-            TR.info(methodName,"Log in to OC with admin user %s"%retcode)
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-            return
 
         #Install Cloud Pak Foundation Service
         if(self.installFoundationalService == "True"):
@@ -130,7 +121,7 @@ class CPDInstall(object):
             
             bedrock_start = Utilities.currentTimeMillis()
             
-            install_foundational_service_command  = "./install_bedrock.sh " + offline_installation_dir + " " + self.FoundationalService_Case_Name  + " " + self.image_registry_url + " " + self.foundation_service_namespace
+            install_foundational_service_command  = "./install_bedrock.sh " + offline_installation_dir + "/" + self.FoundationalService_Case_Name  + " " + self.image_registry_url + " " + self.foundation_service_namespace
 
             TR.info(methodName,"Install Foundational Service with command %s"%install_foundational_service_command)
             
@@ -156,7 +147,7 @@ class CPDInstall(object):
 
             bedrock_start = Utilities.currentTimeMillis()
             
-            install_control_plane_command  = "./install_zen.sh " + offline_installation_dir + " " + self.CPDControlPlane_Case_Name  + " " + self.image_registry_url + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_class + " " + zen_core_metadb_storage_class
+            install_control_plane_command  = "./install_zen.sh " + offline_installation_dir + "/" + self.CPDControlPlane_Case_Name  + " " + self.image_registry_url + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_class + " " + zen_core_metadb_storage_class
 
             TR.info(methodName,"Install Control Plane with command %s"%install_control_plane_command)
             
@@ -185,7 +176,7 @@ class CPDInstall(object):
 
             bedrock_start = Utilities.currentTimeMillis()
             
-            install_wsl_command  = "./install_wsl.sh " + offline_installation_dir + " " + self.WSL_Case_Name  + " " + self.image_registry_url + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_type + " " + self.storage_class
+            install_wsl_command  = "./install_wsl.sh " + offline_installation_dir + "/" + self.WSL_Case_Name  + " " + self.image_registry_url + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_type + " " + self.storage_class
 
             TR.info(methodName,"Install Watson Studio with command %s"%install_wsl_command)
             
