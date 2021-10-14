@@ -6,12 +6,19 @@ PRIVATE_REGISTRY=$3
 BEDROCK_NAMESPACE=$4
 
 # # Clone yaml files from the templates
-unalias cp
+if [[ $(type -t cp) == "alias" ]] then
+  unalias cp
+  echo "unalias cp completed."
+fi
 cp ./templates/cpd/bedrock-operator-group.yaml bedrock-operator-group.yaml
+cp ./templates/cpd/bedrock-sub.yaml bedrock-sub.yaml
+
+mkdir -p ./logs
+touch ./logs/install_bedrock.log
 
 # # create bedrock catalog source 
 
-echo '*** executing **** create bedrock catalog source'
+echo '*** executing **** create bedrock catalog source' >> ./logs/install_bedrock.log
 
 
 cloudctl case launch \
@@ -34,22 +41,20 @@ oc project ${BEDROCK_NAMESPACE}
 
 sed -i -e s#BEDROCK_NAMESPACE#${BEDROCK_NAMESPACE}#g bedrock-operator-group.yaml
 
-echo '*** executing **** oc apply -f bedrock-operator-group.yaml'
+echo '*** executing **** oc apply -f bedrock-operator-group.yaml' >> ./logs/install_bedrock.log
 
 
 result=$(oc apply -f bedrock-operator-group.yaml)
-echo $result
+echo $result >> ./logs/install_bedrock.log
 sleep 1m
-
-oc patch NamespaceScope common-service -n ${BEDROCK_NAMESPACE} --type=merge --patch='{"spec": {"csvInjector": {"enable": true} } }'
 
 # Create bedrock subscription. This will deploy the bedrock: 
 sed -i -e s#BEDROCK_NAMESPACE#${BEDROCK_NAMESPACE}#g bedrock-sub.yaml
 
-echo '*** executing **** oc apply -f bedrock-sub.yaml'
+echo '*** executing **** oc apply -f bedrock-sub.yaml' >> ./logs/install_bedrock.log
 
 result=$(oc apply -f bedrock-sub.yaml)
-echo $result
+echo $result >> ./logs/install_bedrock.log
 sleep 1m
 
 
@@ -58,7 +63,7 @@ while true; do
 # local cm_ns_status=$(oc get cm namespace-scope -n ibm-common-services)
 cm_ns_status=$(oc get cm namespace-scope -n ${BEDROCK_NAMESPACE})
 if [[ -n $cm_ns_status ]]; then
-  echo "Config Map namespace-scope exist."
+  echo "Config Map namespace-scope exist." >> ./logs/install_bedrock.log
   break
 fi
 sleep 30
@@ -67,24 +72,27 @@ sleep 30
 done
 
 
-echo "Waiting for Bedrock operator pods ready"
+echo "Waiting for Bedrock operator pods ready" >> ./logs/install_bedrock.log
 while true; do
 pod_status=$(oc get pods -n ${BEDROCK_NAMESPACE} | grep -Ev "NAME|1/1|2/2|3/3|5/5|Comp")
 if [[ -z $pod_status ]]; then
-  echo "All pods are running now"
+  echo "All pods are running now" >> ./logs/install_bedrock.log
   break
 fi
-echo "Waiting for Bedrock operator pods ready"
+echo "Waiting for Bedrock operator pods ready" >> ./logs/install_bedrock.log
 oc get pods -n ${BEDROCK_NAMESPACE}
 sleep 30
 if [[ `oc get po -n ${BEDROCK_NAMESPACE}` =~ "Error" ]]; then
   oc delete `oc get po -o name | grep ibm-common-service-operator`
 else
-  echo "No pods with Error"
+  echo "No pods with Error" >> ./logs/install_bedrock.log
 fi
 done
   
 sleep 60
+
+oc patch NamespaceScope common-service -n ${BEDROCK_NAMESPACE} --type=merge --patch='{"spec": {"csvInjector": {"enable": true} } }'
+
 
 # Checking if the bedrock operator pods are ready and running. 
 
