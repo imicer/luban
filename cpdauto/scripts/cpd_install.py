@@ -463,12 +463,7 @@ class CPDInstall(object):
         "oc apply -f ${local.ocptemplates}/image_content_source_policy.yaml"
         """
 
-        image_content_source_policy_template = "./templates/cpd/image_content_source_policy.yaml"
-        TR.info(methodName,"Prepare for image content source policy")
-        self.updateTemplateFile(image_content_source_policy_template, '${REPLACE_REGISTRY}', self.image_registry_url)
-        
-
-        image_content_source_policy_cmd =  "oc apply -f " + image_content_source_policy_template
+        image_content_source_policy_cmd =  "oc apply -f " + "./setup-img-content-source-policy.sh " + self.image_registry_url
         TR.info(methodName,"Create image content source policy")
         try:
             retcode = check_output(['bash','-c', image_content_source_policy_cmd]) 
@@ -476,7 +471,7 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
 
-        time.sleep(900)
+        #time.sleep(900)
 
         TR.info(methodName,"  Completed image pull related setting")
     #endDef
