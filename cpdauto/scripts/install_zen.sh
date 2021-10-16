@@ -19,6 +19,7 @@ fi
 cp ./templates/cpd/cpd-operator-group.yaml cpd-operator-group.yaml
 cp ./templates/cpd/cpd-operator-sub.yaml cpd-operator-sub.yaml
 cp ./templates/cpd/cpd-operators-namespace-scope.yaml cpd-operators-namespace-scope.yaml
+cp ./templates/cpd/ibmcpd-cr.yaml ibmcpd-cr.yaml
 
 mkdir -p ./logs
 touch ./logs/install_cpd_platform.log
