@@ -16,5 +16,11 @@ jq --argjson authinfo "$(</tmp/local_reg.json)" '.auths += $authinfo' /tmp/docke
 
 oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=/tmp/global_pull_secret.json
 
+sleem 15m
+
+#Add the private registry to the insecureRegistries list
+oc patch image.config.openshift.io/cluster -p "{\"spec\":{\"registrySources\":{\"insecureRegistries\":[\"$PORTABLE_REGISTRY_HOST:$PORTABLE_REGISTRY_PORT\"]}}}" --type='merge'
+sleem 15m
+
 # take a backup of dockerconfig.json after private image registry secret added. 
 cp /tmp/global_pull_secret.json /tmp/global_pull_secret.json_backup

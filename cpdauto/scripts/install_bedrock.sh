@@ -16,6 +16,7 @@ cp ./templates/cpd/bedrock-sub.yaml bedrock-sub.yaml
 
 mkdir -p ./logs
 touch ./logs/install_bedrock.log
+echo '' > ./logs/install_bedrock.log
 
 # # create bedrock catalog source 
 
