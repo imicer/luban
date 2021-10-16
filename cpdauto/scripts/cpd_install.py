@@ -115,6 +115,14 @@ class CPDInstall(object):
         #private_registry = self.image_registry_url
         offline_installation_dir = self.offline_dir_path
 
+        self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
+        try:
+            call(self.logincmd, shell=True,stdout=icpdInstallLogFile)
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        
+        TR.info(methodName,"oc login successfully")
+
         #Install Cloud Pak Foundation Service
         if(self.installFoundationalService == "True"):
             TR.info(methodName,"Start installing Foundational Service")
