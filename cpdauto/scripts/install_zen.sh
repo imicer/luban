@@ -4,11 +4,12 @@
 OFFLINEDIR=$1
 CASE_PACKAGE_NAME=$2
 PRIVATE_REGISTRY=$3
-CPD_OPERATORS_NAMESPACE=$4
-CPD_INSTANCE_NAMESPACE=$5
-CPD_LICENSE=$6
-STORAGE_CLASS=$7
-ZEN_CORE_METADB_STORAGE_CLASS=$8
+BEDROCK_NAMESPACE=$4
+CPD_OPERATORS_NAMESPACE=$5
+CPD_INSTANCE_NAMESPACE=$6
+CPD_LICENSE=$7
+STORAGE_CLASS=$8
+ZEN_CORE_METADB_STORAGE_CLASS=$9
 
 # # Clone yaml files from the templates
 if [[ $(type -t cp) == "alias" ]]
@@ -118,20 +119,21 @@ oc patch NamespaceScope cpd-operators -n ${CPD_OPERATORS_NAMESPACE} --type=merge
 # Create lite CR: 
 sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g ibmcpd-cr.yaml
 sed -i -e s#CPD_LICENSE#${CPD_LICENSE}#g ibmcpd-cr.yaml
-sed -i -e s#STORAGE_CLASS#${STORAGE_CLASS}#g ibmcpd-cr.yaml
 sed -i -e s#ZEN_CORE_METADB_STORAGE_CLASS#${ZEN_CORE_METADB_STORAGE_CLASS}#g ibmcpd-cr.yaml
+sed -i -e s#STORAGE_CLASS#${STORAGE_CLASS}#g ibmcpd-cr.yaml
+
 echo '*** executing **** oc create -f ibmcpd-cr.yaml' >> ./logs/install_cpd_platform.log
 result=$(oc create -f ibmcpd-cr.yaml)
 echo $result >> ./logs/install_cpd_platform.log
 
 # check if the zen operator pod is up and running.
 
-./pod-status-check.sh ibm-zen-operator ${CPD_OPERATORS_NAMESPACE}
-./pod-status-check.sh ibm-cert-manager-operator ${CPD_OPERATORS_NAMESPACE}
+./pod-status-check.sh ibm-zen-operator ${BEDROCK_NAMESPACE}
+./pod-status-check.sh ibm-cert-manager-operator ${BEDROCK_NAMESPACE}
 
-./pod-status-check.sh cert-manager-cainjector ${CPD_OPERATORS_NAMESPACE}
-./pod-status-check.sh cert-manager-controller ${CPD_OPERATORS_NAMESPACE}
-./pod-status-check.sh cert-manager-webhook ${CPD_OPERATORS_NAMESPACE}
+./pod-status-check.sh cert-manager-cainjector ${BEDROCK_NAMESPACE}
+./pod-status-check.sh cert-manager-controller ${BEDROCK_NAMESPACE}
+./pod-status-check.sh cert-manager-webhook ${BEDROCK_NAMESPACE}
 
 # check the lite cr status
 
