@@ -11,14 +11,22 @@ STORAGE_CLASS=$7
 ZEN_CORE_METADB_STORAGE_CLASS=$8
 
 # # Clone yaml files from the templates
-unalias cp
+if [[ $(type -t cp) == "alias" ]]
+then
+  unalias cp
+  echo "unalias cp completed."
+fi
 cp ./templates/cpd/cpd-operator-group.yaml cpd-operator-group.yaml
 cp ./templates/cpd/cpd-operator-sub.yaml cpd-operator-sub.yaml
 cp ./templates/cpd/cpd-operators-namespace-scope.yaml cpd-operators-namespace-scope.yaml
 
+mkdir -p ./logs
+touch ./logs/install_cpd_platform.log
+echo '' > ./logs/install_cpd_platform.log
+
 # Create zen catalog source 
 
-echo '*** executing **** create Cloud Pak for Data Platform (zen) catalog source'
+echo '*** executing **** create Cloud Pak for Data Platform (zen) catalog source' >> ./logs/install_cpd_platform.log
 
 cloudctl case launch \
   --case ${OFFLINEDIR}/${CASE_PACKAGE_NAME} \
@@ -31,7 +39,7 @@ cloudctl case launch \
 sleep 1m
 
 # Create CPD Operators namespace
-echo '*** executing **** create CPD Operators namespace '
+echo '*** executing **** create CPD Operators namespace ' >> ./logs/install_cpd_platform.log
 oc new-project ${CPD_OPERATORS_NAMESPACE}
 oc project ${CPD_OPERATORS_NAMESPACE}
 
@@ -41,25 +49,23 @@ oc project ${CPD_OPERATORS_NAMESPACE}
 
 sed -i -e s#CPD_OPERATORS_NAMESPACE#${CPD_OPERATORS_NAMESPACE}#g cpd-operator-group.yaml
 
-echo '*** executing **** oc apply -f cpd-operator-group.yaml'
+echo '*** executing **** oc apply -f cpd-operator-group.yaml' >> ./logs/install_cpd_platform.log
 
 
 result=$(oc apply -f cpd-operator-group.yaml)
-echo $result
+echo $result >> ./logs/install_cpd_platform.log
 sleep 1m
-
-oc patch NamespaceScope cpd-operators -n ${CPD_OPERATORS_NAMESPACE} --type=merge --patch='{"spec": {"csvInjector": {"enable": true} } }'
 
 
 sed -i -e s#CPD_OPERATORS_NAMESPACE#${CPD_OPERATORS_NAMESPACE}#g cpd-operator-sub.yaml
-echo '*** executing **** oc apply -f cpd-operator-sub.yaml'
+echo '*** executing **** oc apply -f cpd-operator-sub.yaml' >> ./logs/install_cpd_platform.log
 result=$(oc apply -f cpd-operator-sub.yaml)
-echo $result
+echo $result >> ./logs/install_cpd_platform.log
 sleep 60
 
 while true; do
 if oc get sub -n ${CPD_OPERATORS_NAMESPACE} cpd-operator -o jsonpath='{.status.installedCSV} {"\n"}' | grep cpd-platform-operator.v2.0.3 >/dev/null 2>&1; then
-  echo -e "\ncpd-platform-operator.v2.0.3 was successfully created."
+  echo -e "\ncpd-platform-operator.v2.0.3 was successfully created." >> ./logs/install_cpd_platform.log
   break
 fi
 sleep 10
@@ -67,7 +73,7 @@ done
 
 while true; do
 if oc get csv -n ${CPD_OPERATORS_NAMESPACE} cpd-platform-operator.v2.0.3 -o jsonpath='{ .status.phase } : { .status.message} {"\n"}' | grep "Succeeded : install strategy completed with no errors" >/dev/null 2>&1; then
-  echo -e "\nInstall strategy completed with no errors"
+  echo -e "\nInstall strategy completed with no errors" >> ./logs/install_cpd_platform.log
   break
 fi
 sleep 10
@@ -75,7 +81,7 @@ done
 
 while true; do
 if oc get deployments -n ${CPD_OPERATORS_NAMESPACE} -l olm.owner="cpd-platform-operator.v2.0.3" -o jsonpath="{.items[0].status.availableReplicas} {'\n'}" | grep 1 >/dev/null 2>&1; then
-  echo -e "\ncpd-platform-operator.v2.0.3 is ready."
+  echo -e "\ncpd-platform-operator.v2.0.3 is ready." >> ./logs/install_cpd_platform.log
   break
 fi
 sleep 10
@@ -83,7 +89,7 @@ done
 
 while true; do
 if oc get pods -n ${CPD_OPERATORS_NAMESPACE} | grep cpd-platform-operator-manager >/dev/null 2>&1; then
-  echo -e "\ncpd-platform-operator-manager pods running"
+  echo -e "\ncpd-platform-operator-manager pods running" >> ./logs/install_cpd_platform.log
   break
 fi
 sleep 10
@@ -91,37 +97,31 @@ done
 
 
 # Create zen namespace
-echo '*** executing **** create CPD Instance namespace '
+echo '*** executing **** create CPD Instance namespace ' >> ./logs/install_cpd_platform.log
 oc new-project ${CPD_INSTANCE_NAMESPACE}
 oc project ${CPD_INSTANCE_NAMESPACE}
 
 
 # Create NameScope in CPD Operators namespace 
-echo '*** executing **** Create NameScope in CPD Operators namespace'
+echo '*** executing **** Create NameScope in CPD Operators namespace' >> ./logs/install_cpd_platform.log
 sed -i -e s#CPD_OPERATORS_NAMESPACE#${CPD_OPERATORS_NAMESPACE}#g cpd-operators-namespace-scope.yaml
 sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g cpd-operators-namespace-scope.yaml
-echo '*** executing **** oc apply -f cpd-operators-namespace-scope.yaml'
+echo '*** executing **** oc apply -f cpd-operators-namespace-scope.yaml' >> ./logs/install_cpd_platform.log
 result=$(oc apply -f cpd-operators-namespace-scope.yaml)
-echo $result
+echo $result >> ./logs/install_cpd_platform.log
 sleep 30
 
-# Create the zen operator 
-sed -i -e s#CPD_OPERATORS_NAMESPACE#${CPD_OPERATORS_NAMESPACE}#g cpd-operator-sub.yaml
-
-echo '*** executing **** oc apply -f cpd-operator-sub.yaml'
-result=$(oc apply -f cpd-operator-sub.yaml)
-echo $result
-sleep 30
-
+echo '*** executing **** Patch NamespaceScope cpd-operators' >> ./logs/install_cpd_platform.log
+oc patch NamespaceScope cpd-operators -n ${CPD_OPERATORS_NAMESPACE} --type=merge --patch='{"spec": {"csvInjector": {"enable": true} } }'
 
 # Create lite CR: 
 sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g ibmcpd-cr.yaml
 sed -i -e s#CPD_LICENSE#${CPD_LICENSE}#g ibmcpd-cr.yaml
 sed -i -e s#STORAGE_CLASS#${STORAGE_CLASS}#g ibmcpd-cr.yaml
 sed -i -e s#ZEN_CORE_METADB_STORAGE_CLASS#${ZEN_CORE_METADB_STORAGE_CLASS}#g ibmcpd-cr.yaml
-echo '*** executing **** oc create -f ibmcpd-cr.yaml'
+echo '*** executing **** oc create -f ibmcpd-cr.yaml' >> ./logs/install_cpd_platform.log
 result=$(oc create -f ibmcpd-cr.yaml)
-echo $result
+echo $result >> ./logs/install_cpd_platform.log
 
 # check if the zen operator pod is up and running.
 
