@@ -8,7 +8,8 @@ PRIVATE_REGISTRY=$3
 CPD_OPERATORS_NAMESPACE=$4
 CPD_INSTANCE_NAMESPACE=$5
 CPD_LICENSE=$6
-STORAGE_CLASS=$7
+STORAGE_TYPE=$7
+STORAGE_CLASS=$8
 
 # # Clone yaml files from the templates
 if [[ $(type -t cp) == "alias" ]]
@@ -57,6 +58,11 @@ oc project ${CPD_INSTANCE_NAMESPACE}
 
 # Create wsl CR: 
 sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g wsl-cr.yaml
+if [[ $(STORAGE_TYPE) == "nfs" ]]
+then
+  sed -i "/storageVendor/d" wsl-cr.yaml
+fi
+
 result=$(oc apply -f wsl-cr.yaml)
 echo $result >> ./logs/install_wsl.log
 
