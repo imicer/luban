@@ -19,6 +19,7 @@ then
 fi
 cp ./templates/cpd/cpd-operator-group.yaml cpd-operator-group.yaml
 cp ./templates/cpd/cpd-operator-sub.yaml cpd-operator-sub.yaml
+cp ./templates/cpd/cpd-operators-namespace-scope-operator.yaml cpd-operators-namespace-scope-operator.yaml
 cp ./templates/cpd/cpd-operators-namespace-scope.yaml cpd-operators-namespace-scope.yaml
 cp ./templates/cpd/ibmcpd-cr.yaml ibmcpd-cr.yaml
 
@@ -103,6 +104,13 @@ echo '*** executing **** create CPD Instance namespace ' >> ./logs/install_cpd_p
 oc new-project ${CPD_INSTANCE_NAMESPACE}
 oc project ${CPD_INSTANCE_NAMESPACE}
 
+# Create NameScope Operator in CPD Operators namespace 
+echo '*** executing **** Create NameScope Operator in CPD Operators namespace' >> ./logs/install_cpd_platform.log
+sed -i -e s#CPD_OPERATORS_NAMESPACE#${CPD_OPERATORS_NAMESPACE}#g cpd-operators-namespace-scope-operator.yaml
+echo '*** executing **** oc apply -f cpd-operators-namespace-scope-operator.yaml' >> ./logs/install_cpd_platform.log
+result=$(oc apply -f cpd-operators-namespace-scope-operator.yaml)
+echo $result >> ./logs/install_cpd_platform.log
+sleep 5m
 
 # Create NameScope in CPD Operators namespace 
 echo '*** executing **** Create NameScope in CPD Operators namespace' >> ./logs/install_cpd_platform.log
@@ -125,6 +133,9 @@ sed -i -e s#STORAGE_CLASS#${STORAGE_CLASS}#g ibmcpd-cr.yaml
 echo '*** executing **** oc create -f ibmcpd-cr.yaml' >> ./logs/install_cpd_platform.log
 result=$(oc create -f ibmcpd-cr.yaml)
 echo $result >> ./logs/install_cpd_platform.log
+
+# check if the namespace scope operator pod is up and running.
+./pod-status-check.sh ibm-namespace-scope-operator ${CPD_OPERATORS_NAMESPACE}
 
 # check if the zen operator pod is up and running.
 
