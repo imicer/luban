@@ -58,7 +58,9 @@ oc project ${CPD_INSTANCE_NAMESPACE}
 
 # Create wsl CR: 
 sed -i -e s#CPD_INSTANCE_NAMESPACE#${CPD_INSTANCE_NAMESPACE}#g wsl-cr.yaml
-if [[ $(STORAGE_TYPE) == "nfs" ]]
+sed -i -e s#CPD_LICENSE#${CPD_LICENSE}#g wsl-cr.yaml
+sed -i -e s#STORAGE_CLASS#${STORAGE_CLASS}#g wsl-cr.yaml
+if [[ ${STORAGE_TYPE} == "nfs" ]]
 then
   sed -i "/storageVendor/d" wsl-cr.yaml
 fi

@@ -170,14 +170,14 @@ class CPDInstall(object):
             TR.info(methodName,"Install Control Plane completed")
             self.printTime(bedrock_start, bedrock_end, "Install Control Plane")   
 
-        get_cpd_route_cmd = "oc get route -n "+self.cpd_instance_namespace+ " | grep '"+self.cpd_instance_namespace+"' | awk '{print $2}'"
-        TR.info(methodName, "Get CPD URL")
-        try:
-            self.cpdURL = check_output(['bash','-c', get_cpd_route_cmd]) 
-            TR.info(methodName, "CPD URL retrieved %s"%self.cpdURL)
-        except CalledProcessError as e:
-            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-            return   
+            get_cpd_route_cmd = "oc get route -n "+self.cpd_instance_namespace+ " | grep '"+self.cpd_instance_namespace+"' | awk '{print $2}'"
+            TR.info(methodName, "Get CPD URL")
+            try:
+                self.cpdURL = check_output(['bash','-c', get_cpd_route_cmd]) 
+                TR.info(methodName, "CPD URL retrieved %s"%self.cpdURL)
+            except CalledProcessError as e:
+                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+                return   
 
         if(self.installWSL == "True"):
             TR.info(methodName,"Start installing Watson Studio Local") 
