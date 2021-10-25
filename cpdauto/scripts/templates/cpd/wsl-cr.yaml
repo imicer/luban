@@ -4,9 +4,8 @@ metadata:
   name: ws-cr     # This is the recommended name, but you can change it
   namespace: CPD_INSTANCE_NAMESPACE     # Replace with the project where you will install Watson Studio
 spec:
-  docker_registry_prefix: cp.icr.io/cp/cpd
   license:
     accept: true
     license: CPD_LICENSE     # Specify the license you purchased
   storageVendor: STORAGE_TYPE
-  storageClass: STORAGE_CLASS          #if you use a different storage class, replace it with the appropriate storage class  
+  storageClass: STORAGE_CLASS          #if you use a different storage class, replace it with the appropriate storage class
