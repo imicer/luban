@@ -170,7 +170,7 @@ class CPDInstall(object):
             TR.info(methodName,"Install Control Plane completed")
             self.printTime(bedrock_start, bedrock_end, "Install Control Plane")   
 
-        get_cpd_route_cmd = "oc get route -n "+self.namespace+ " | grep '"+self.namespace+"' | awk '{print $2}'"
+        get_cpd_route_cmd = "oc get route -n "+self.cpd_instance_namespace+ " | grep '"+self.cpd_instance_namespace+"' | awk '{print $2}'"
         TR.info(methodName, "Get CPD URL")
         try:
             self.cpdURL = check_output(['bash','-c', get_cpd_route_cmd]) 
