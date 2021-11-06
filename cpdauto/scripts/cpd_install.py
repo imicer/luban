@@ -321,6 +321,7 @@ class CPDInstall(object):
             install_wkc_command  = "./install_wkc.sh " + offline_installation_dir + " " + self.WKC_Case_Name  + " " + self.image_registry_url + " " + self.foundation_service_namespace + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_type + " " + self.storage_class
             TR.info(methodName,"Install Watson Knowledge Catalog with command %s"%install_wkc_command)
             
+            install_wkc_retcode = ""
             try:
                 install_wkc_retcode = check_output(['bash','-c', install_wkc_command]) 
             except CalledProcessError as e:

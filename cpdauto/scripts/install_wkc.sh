@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+#WKC 4.0.2
 
 OFFLINEDIR=$1
 CASE_PACKAGE_NAME=$2
