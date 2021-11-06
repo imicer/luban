@@ -37,4 +37,4 @@ volumes:
 - projected
 - secret
 users:
-- system:serviceaccount:REPLACE_NAMESPACE:wkc-iis-sa
+- system:serviceaccount:CPD_INSTANCE_NAMESPACE:wkc-iis-sa
