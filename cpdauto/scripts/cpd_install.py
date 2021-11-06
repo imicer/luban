@@ -153,7 +153,7 @@ class CPDInstall(object):
             if(self.storage_type == "ocs"):
                 zen_core_metadb_storage_class = "ocs-storagecluster-ceph-rbd" 
 
-            bedrock_start = Utilities.currentTimeMillis()
+            zen_start = Utilities.currentTimeMillis()
             
             install_control_plane_command  = "./install_zen.sh " + offline_installation_dir + " " + self.CPDControlPlane_Case_Name  + " " + self.image_registry_url + " " + self.foundation_service_namespace + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_class + " " + zen_core_metadb_storage_class
 
@@ -166,9 +166,9 @@ class CPDInstall(object):
                 return
             TR.info(methodName,"Install Control Plane with command %s returned %s"%(install_control_plane_command,install_control_plane_retcode))
             
-            bedrock_end = Utilities.currentTimeMillis()
+            zen_end = Utilities.currentTimeMillis()
             TR.info(methodName,"Install Control Plane completed")
-            self.printTime(bedrock_start, bedrock_end, "Install Control Plane")   
+            self.printTime(zen_start, zen_end, "Install Control Plane")   
 
             get_cpd_route_cmd = "oc get route -n "+self.cpd_instance_namespace+ " | grep '"+self.cpd_instance_namespace+"' | awk '{print $2}'"
             TR.info(methodName, "Get CPD URL")
@@ -182,7 +182,7 @@ class CPDInstall(object):
         if(self.installWSL == "True"):
             TR.info(methodName,"Start installing Watson Studio Local") 
 
-            bedrock_start = Utilities.currentTimeMillis()
+            wsl_start = Utilities.currentTimeMillis()
             
             install_wsl_command  = "./install_wsl.sh " + offline_installation_dir + " " + self.WSL_Case_Name  + " " + self.image_registry_url + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_type + " " + self.storage_class
 
@@ -195,9 +195,9 @@ class CPDInstall(object):
             
             TR.info(methodName,"Install Watson Studio with command %s returned %s"%(install_wsl_command,install_wsl_retcode))
             
-            bedrock_end = Utilities.currentTimeMillis()
+            wsl_end = Utilities.currentTimeMillis()
             TR.info(methodName,"Install Watson Studio completed")
-            self.printTime(bedrock_start, bedrock_end, "Install Control Plane")   
+            self.printTime(wsl_start, wsl_end, "Install Watson Studio")
         
         if(self.installWML == "True"):
             TR.info(methodName,"Start installing WML package")
@@ -311,15 +311,26 @@ class CPDInstall(object):
             self.printTime(dodsstart, dodsend, "Installing DODS") 
 
         if(self.installWKC == "True"):
-            TR.info(methodName,"Start installing WKC package")
+
+            #self.installDb2UOperator(icpdInstallLogFile)
+            
+            TR.info(methodName,"Start installing Watson Knowledge Catalog") 
+
             wkcstart = Utilities.currentTimeMillis()
-            if(self.installWKC_load_from == "NA"):
-                self.installAssembliesAirgap("wkc",self.default_load_from,icpdInstallLogFile)
-            else:
-                self.installAssembliesAirgap("wkc",self.installWKC_load_from,icpdInstallLogFile)            
+            
+            install_wkc_command  = "./install_wkc.sh " + offline_installation_dir + " " + self.WKC_Case_Name  + " " + self.image_registry_url + " " + self.foundation_service_namespace + " " + self.cpd_operator_namespace + " " + self.cpd_instance_namespace + " " + self.cpd_license + " " + self.storage_type + " " + self.storage_class
+            TR.info(methodName,"Install Watson Knowledge Catalog with command %s"%install_wkc_command)
+            
+            try:
+                install_wkc_retcode = check_output(['bash','-c', install_wkc_command]) 
+            except CalledProcessError as e:
+                TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+            
+            TR.info(methodName,"Install Watson Knowledge Catalog with command %s returned %s"%(install_wkc_command,install_wkc_retcode))
+            
             wkcend = Utilities.currentTimeMillis()
-            TR.info(methodName,"WKC package installation completed")
-            self.printTime(wkcstart, wkcend, "Installing WKC")
+            TR.info(methodName,"Install Watson Knowledge Catalog completed")
+            self.printTime(wkcstart, wkcend, "Install Watson Knowledge Catalog")
             
         if(self.installDV == "True"):
             TR.info(methodName,"Start installing DV package")
@@ -374,11 +385,12 @@ class CPDInstall(object):
             crio_retcode = check_output(['bash','-c', create_crio_mc]) 
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-        TR.info(methodName,"Created Crio mc with command %s returned %s"%(create_crio_mc,crio_retcode))
+        TR.info(methodName,"Created CRIO mc with command %s returned %s"%(create_crio_mc,crio_retcode))
         
+        TR.info(methodName,"Wait 15 minutes for CRIO Machine Config to be completed")
+        time.sleep(900)
         """
-        "oc apply -f ${local.ocptemplates}/kernel-params_node-tuning-operator.yaml",
-        "oc apply -f ${local.ocptemplates}/security-limits-mc.yaml",
+        "oc apply -f ${local.ocptemplates}/kernel-params_node-tuning-operator.yaml"
         """
         setting_kernel_param_cmd =  "oc apply -f ./templates/cpd/kernel-params_node-tuning-operator.yaml"
         TR.info(methodName,"Create Node Tuning Operator for kernel parameter")
@@ -395,6 +407,8 @@ class CPDInstall(object):
             TR.info(methodName,"Configured kubelet to allow Db2U to make syscalls %s" %retcode)  
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
+        
+        TR.info(methodName,"Wait 10 minutes for Db2U Kubelet Config to be completed")
         time.sleep(600)
 
         TR.info(methodName,"  Completed node settings of Openshift Container Platform")
@@ -439,6 +453,33 @@ class CPDInstall(object):
         TR.info(methodName,"  Completed image pull related setting")
     #endDef
 
+    def installDb2UOperator(self, icpdInstallLogFile):
+       
+        methodName = "installDb2UOperator"
+        TR.info(methodName," Start installing Db2U operator")  
+
+        self.logincmd = "oc login -u " + self.ocp_admin_user + " -p "+self.ocp_admin_password
+        try:
+            call(self.logincmd, shell=True,stdout=icpdInstallLogFile)
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        
+        TR.info(methodName,"oc login successfully")
+
+        install_db2u_command  = "./install_db2u.sh " + self.offline_dir_path + " " + self.Db2U_Case_Name 
+
+        TR.info(methodName,"Installing Db2U with command %s"%install_db2u_command)
+        try:
+            retcode = check_output(['bash','-c', install_db2u_command]) 
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
+        TR.info(methodName,"Installing Db2U with command %s returned %s"%(install_db2u_command,retcode))
+        
+        time.sleep(60)
+
+        TR.info(methodName,"  Completed Db2U catalog source installation")
+    #endDef
+
     def updateTemplateFile(self, source, placeHolder, value):
         """
         method to update placeholder values in templates
@@ -480,7 +521,10 @@ class CPDInstall(object):
         self.installWSL = config['cpd_assembly']['installWSL'].strip()
         self.WSL_Case_Name = config['cpd_assembly']['WSL_Case_Name'].strip()
         self.installWML = config['cpd_assembly']['installWML'].strip()
+        self.installDb2U = config['cpd_assembly']['installDb2U'].strip()
+        self.Db2U_Case_Name = config['cpd_assembly']['Db2U_Case_Name'].strip()
         self.installWKC = config['cpd_assembly']['installWKC'].strip()
+        self.WKC_Case_Name = config['cpd_assembly']['WKC_Case_Name'].strip()
         self.installSpark = config['cpd_assembly']['installSpark'].strip()
         self.installCDE = config['cpd_assembly']['installCDE'].strip()
         self.installDMC = config['cpd_assembly']['installDMC'].strip()
@@ -549,7 +593,10 @@ class CPDInstall(object):
                 TR.info("debug","installWSL= %s" %self.installWSL)
                 TR.info("debug","WSL_Case_Name= %s" %self.WSL_Case_Name) 
                 TR.info("debug","installWML= %s" %self.installWML)
+                TR.info("debug","installDb2U= %s" %self.installDb2U)
+                TR.info("debug","Db2U_Case_Name= %s" %self.Db2U_Case_Name) 
                 TR.info("debug","installWKC= %s" %self.installWKC)
+                TR.info("debug","WKC_Case_Name= %s" %self.WKC_Case_Name)
                 TR.info("debug","installDV= %s" %self.installDV)
                 TR.info("debug","installDMC= %s" %self.installDMC)
                 TR.info("debug","installOSWML= %s" %self.installOSWML)
