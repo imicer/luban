@@ -26,7 +26,7 @@ echo '' > ./logs/install_wsl.log
 
 # Create wsl catalog source 
 
-echo '*** executing **** create WSL catalog source' >> ./logs/install_cpd_platform.log
+echo '*** executing **** create WSL catalog source' >> ./logs/install_wsl.log
 
 cloudctl case launch \
   --case ${OFFLINEDIR}/${CASE_PACKAGE_NAME} \
