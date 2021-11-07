@@ -480,9 +480,9 @@ class CPDInstall(object):
         TR.info(methodName,"Installing Db2U with command %s"%install_db2u_command)
         try:
             retcode = check_output(['bash','-c', install_db2u_command]) 
+            TR.info(methodName,"Installing Db2U with command %s returned %s"%(install_db2u_command,retcode))
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))    
-        TR.info(methodName,"Installing Db2U with command %s returned %s"%(install_db2u_command,retcode))
         
         time.sleep(60)
 
