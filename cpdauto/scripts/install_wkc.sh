@@ -45,10 +45,10 @@ oc -n ${BEDROCK_NAMESPACE} get operandRegistry common-service -o yaml > operandR
 
 tr '\n' '@' < operandRegistry.yaml > operandRegistry_tmp.yaml
 sed -i -E "s/(namespace: .+)${BEDROCK_NAMESPACE}@(.+packageName: db2u-operator@)/\1${CPD_OPERATORS_NAMESPACE}@\2/" operandRegistry_tmp.yaml
-tr '@' '\n' < operandRegistry_tmp1.yaml > operandRegistry_replaced.yaml
+tr '@' '\n' < operandRegistry_tmp.yaml > operandRegistry_replaced.yaml
 
-echo '*** executing **** oc apply -f operandRegistry_replaced.yaml' >> ./logs/install_wkc.log
-result=$(oc apply -f operandRegistry_replaced.yaml)
+echo "*** executing **** oc -n ${BEDROCK_NAMESPACE} apply -f operandRegistry_replaced.yaml" >> ./logs/install_wkc.log
+result=$(oc -n ${BEDROCK_NAMESPACE} apply -f operandRegistry_replaced.yaml)
 echo $result  >> ./logs/install_wkc.log
 sleep 1m
 
@@ -119,7 +119,7 @@ echo $result >> ./logs/install_wkc.log
 ./check-cr-status.sh Db2aaserviceService db2aaservice-cr ${CPD_INSTANCE_NAMESPACE} db2aaserviceStatus
 
 # check the iis cr status
-./check-cr-status.sh iis iis-cr ${NAMESPACE} iisStatus
+./check-cr-status.sh iis iis-cr ${CPD_INSTANCE_NAMESPACE} iisStatus
 
 # check the ug cr status
-./check-cr-status.sh ug ug-cr ${NAMESPACE} ugStatus
+./check-cr-status.sh ug ug-cr ${CPD_INSTANCE_NAMESPACE} ugStatus

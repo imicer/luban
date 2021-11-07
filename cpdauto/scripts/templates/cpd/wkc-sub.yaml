@@ -11,5 +11,5 @@ spec:
     channel: v1.0
     installPlanApproval: Automatic
     name: ibm-cpd-wkc
-    source: ibm-operator-catalog
+    source: ibm-cpd-wkc-operator-catalog
     sourceNamespace: openshift-marketplace

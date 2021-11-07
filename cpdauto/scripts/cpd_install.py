@@ -312,7 +312,7 @@ class CPDInstall(object):
 
         if(self.installWKC == "True"):
 
-            #self.installDb2UOperator(icpdInstallLogFile)
+            self.installDb2UOperator(icpdInstallLogFile)
             
             TR.info(methodName,"Start installing Watson Knowledge Catalog") 
 
@@ -409,6 +409,14 @@ class CPDInstall(object):
         except CalledProcessError as e:
             TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
         
+        db2_kubelet_config_label_cmd =  "oc label machineconfigpool worker db2u-kubelet=sysctl"
+        TR.info(methodName,"Update the label on the machineconfigpool.")
+        try:
+            retcode = check_output(['bash','-c', db2_kubelet_config_label_cmd]) 
+            TR.info(methodName,"Updated the label on the machineconfigpool %s" %retcode)  
+        except CalledProcessError as e:
+            TR.error(methodName,"command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))  
+  
         TR.info(methodName,"Wait 10 minutes for Db2U Kubelet Config to be completed")
         time.sleep(600)
 
