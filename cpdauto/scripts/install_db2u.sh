@@ -3,7 +3,8 @@
 
 
 OFFLINEDIR=$1
-CASE_PACKAGE_NAME=$2
+DB2AAS_CASE_PACKAGE_NAME=$2
+DB2U_CASE_PACKAGE_NAME=$3
 
 mkdir -p ./logs
 touch ./logs/install_db2u.log
@@ -14,12 +15,20 @@ echo '' > ./logs/install_db2u.log
 echo '*** executing **** create Db2U catalog source' >> ./logs/install_db2u.log
 #
 yum install -y python2
-alternatives --set python /usr/bin/python2
+ln -s /usr/bin/python2 /usr/bin/python
 pip2 install pyyaml
 
+cloudctl case launch \
+  --case ${OFFLINEDIR}/${DB2AAS_CASE_PACKAGE_NAME} \
+ --inventory db2aaserviceOperatorSetup \
+ --namespace openshift-marketplace \
+ --action install-catalog \
+    --args "--inputDir ${OFFLINEDIR} --recursive"
+
+sleep 1m
 
 cloudctl case launch \
-  --case ${OFFLINEDIR}/${CASE_PACKAGE_NAME} \
+  --case ${OFFLINEDIR}/${DB2U_CASE_PACKAGE_NAME} \
   --inventory db2uOperatorSetup \
   --namespace openshift-marketplace \
   --action install-catalog \
@@ -27,5 +36,4 @@ cloudctl case launch \
 
 sleep 1m
 
-
-alternatives --remove python /usr/bin/python2
+ln -s /usr/bin/python3 /usr/bin/python

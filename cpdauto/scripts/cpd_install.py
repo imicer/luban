@@ -312,7 +312,7 @@ class CPDInstall(object):
 
         if(self.installWKC == "True"):
 
-            self.installDb2UOperator(icpdInstallLogFile)
+            #self.installDb2UOperator(icpdInstallLogFile)
             
             TR.info(methodName,"Start installing Watson Knowledge Catalog") 
 
@@ -475,7 +475,8 @@ class CPDInstall(object):
         
         TR.info(methodName,"oc login successfully")
 
-        install_db2u_command  = "./install_db2u.sh " + self.offline_dir_path + " " + self.Db2U_Case_Name 
+        #install_db2u_command  = "./install_db2u.sh " + self.offline_dir_path + " " + self.Db2U_Case_Name + " " + self.Db2U_Case_Name 
+        install_db2u_command  = "./install_db2u.sh " + self.offline_dir_path + " " + self.Db2U_Case_Name + " " + "ibm-db2aaservice-4.0.3.tgz"
 
         TR.info(methodName,"Installing Db2U with command %s"%install_db2u_command)
         try:
